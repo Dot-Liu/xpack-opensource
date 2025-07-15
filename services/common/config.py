@@ -1,0 +1,25 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class Config:
+    DATABASE_URL = os.getenv(
+        "DATABASE_URL", "mysql+mysqlconnector://root:123456@172.31.126.12:3306/xpack-opensource"
+    )
+    SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
+    API_PORT = int(os.getenv("API_PORT", 8000))
+    ADMIN_PORT = int(os.getenv("ADMIN_PORT", 8001))
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+    REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+    REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "redis")
+    REDIS_DB = int(os.getenv("REDIS_DB", 0))
+    RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
+    RABBITMQ_PORT = int(os.getenv("RABBITMQ_PORT", 5672))
+    RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
+    RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
+    RABBITMQ_VHOST = os.getenv("RABBITMQ_VHOST", "/")
+    DEBUG = os.getenv("DEBUG", "true").lower() == "true"
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

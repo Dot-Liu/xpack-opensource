@@ -1,0 +1,63 @@
+from sqlalchemy import Column, BigInteger, Integer, String, Enum, Boolean, DateTime, text
+from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped, mapped_column
+from enum import Enum as PyEnum
+from services.common.models.base import Base
+
+
+class RegisterType(PyEnum):
+    EMAIL = "email"
+    GOOGLE = "google"
+
+
+class UserType(PyEnum):
+    USER = "user"
+    ADMIN = "admin"
+
+
+class User(Base):
+    __tablename__ = "user"
+
+    id: Mapped[int] = mapped_column(
+        BigInteger,
+        primary_key=True,
+        autoincrement=True,
+        comment="Primary key, auto-incremented ID",
+    )
+    user_id: Mapped[str] = mapped_column(String(36), unique=True, nullable=False, comment="Unique user ID (UUID)")
+    name: Mapped[str] = mapped_column(String(100), nullable=False, comment="Username")
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Email address")
+    avatar: Mapped[str] = mapped_column(String(255), comment="Avatar URL")
+    is_active: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=True,
+        comment="Account status: 0=disabled, 1=active",
+    )
+    is_deleted: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=False,
+        comment="Soft delete flag: 0=active, 1=deleted",
+    )
+    register_type: Mapped[RegisterType] = mapped_column(
+        Enum(RegisterType, values_callable=lambda obj: [e.value for e in obj]), nullable=False, comment="Registration method"
+    )
+    user_type: Mapped[UserType] = mapped_column(
+        Enum(UserType, values_callable=lambda obj: [e.value for e in obj]), nullable=False, default=UserType.USER, comment="User role"
+    )
+    last_login_at = Column(DateTime, comment="Last login timestamp")
+    last_login_ip = Column(String(45), comment="Last login IP (IPv4/IPv6 compatible)")
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+        comment="Creation timestamp",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+        server_onupdate=func.current_timestamp(),
+        comment="Last update timestamp",
+    )
