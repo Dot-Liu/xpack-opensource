@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Body
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
@@ -9,8 +9,12 @@ from services.admin_service.services import auth_service
 router = APIRouter()
 
 
-@router.get("/auth/email/sign", response_model=dict)
-def email_login(email: str, captcha: str, db: Session = Depends(get_db)):
+@router.post("/email/sign", response_model=dict)
+def email_login(body: dict = Body(...), db: Session = Depends(get_db)):
+    email = body.get("email")
+    captcha = body.get("captcha")
+    if not email or not captcha:
+        return ResponseUtils.error(message="email and captcha required", code=400)
     token = auth_service.email_login(db, email, captcha)
     if token:
         return ResponseUtils.success({"token": token})
@@ -18,8 +22,11 @@ def email_login(email: str, captcha: str, db: Session = Depends(get_db)):
         return ResponseUtils.error(message="login failed", code=401)
 
 
-@router.post("/auth/email/send-captcha", response_model=dict)
-def email_login_send_captcha(email: str):
+@router.post("/email/send-captcha", response_model=dict)
+def email_login_send_captcha(body: dict = Body(...)):
+    email = body.get("email")
+    if not email:
+        return ResponseUtils.error(message="email required", code=400)
     if auth_service.send_email_login_captcha(email):
         return ResponseUtils.success()
     else:
