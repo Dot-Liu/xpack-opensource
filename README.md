@@ -55,3 +55,8 @@ project_name/
 ## 简介
 
 本项目为多服务架构示例，包含 API 服务、管理后台服务、公共模块、前端占位、测试、文档等。 
+
+## 启动
+```shell
+uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --reload
+```
