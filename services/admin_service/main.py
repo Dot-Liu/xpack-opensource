@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from services.common.config import Config
-from services.admin_service.controllers import user
+from services.admin_service.controllers import user_contoller
 from services.admin_service.middleware import AuthMiddleware
 import logging
 
@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(user.router, prefix="/admin")
+app.include_router(user_contoller.router, prefix="/admin/user")
 
 logging.basicConfig(level=logging.DEBUG)
 

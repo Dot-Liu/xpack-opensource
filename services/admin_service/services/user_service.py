@@ -19,4 +19,4 @@ def get_user(db: Session, user_id: str) -> Optional[User]:
     Returns:
         User: The User object if found, otherwise None.
     """
-    return db.query(User).filter(User.user_id == user_id).first()
+    return db.query(User).filter(User.id == user_id).first()

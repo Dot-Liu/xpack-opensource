@@ -57,7 +57,7 @@ def verify_token(token: str, db: Session) -> Optional[User]:
         if not user:
             user = (
                 db.query(User)
-                .filter(User.user_id == user_access_token.user_id and User.is_deleted == False and User.is_active == True)
+                .filter(User.id == user_access_token.user_id and User.is_deleted == False and User.is_active == True)
                 .first()
             )
             if not user:

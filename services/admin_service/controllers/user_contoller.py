@@ -7,13 +7,13 @@ from services.common.response.user_response import UserResponse
 router = APIRouter()
 
 
-@router.get("/user", response_model=dict)
+@router.get("/", response_model=dict)
 def get_user(request: Request, db: Session = Depends(get_db)):
     user_response = UserResponse()
 
     user = request.scope.get("user")
     if user:
-        user_response.user_id = user.user_id
+        user_response.user_id = user.id
         user_response.name = user.name
         user_response.email = user.email
         user_response.created_at = user.created_at
