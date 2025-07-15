@@ -5,43 +5,47 @@ from email.mime.multipart import MIMEMultipart
 from services.common.config import Config
 
 
-def send_email(
-    subject: str,
-    body: str,
-    to: str,
-    is_html: bool = False,
-):
-    """
-    Send email using SMTP config from Config
-    :param subject: Email subject
-    :param body: Email body
-    :param to: Recipient email
-    :param is_html: Is HTML content
-    :return: None
-    """
-    sender = Config.SMTP_USER
-    msg = MIMEMultipart()
-    msg["From"] = sender
-    msg["To"] = to
-    msg["Subject"] = subject
+class EmailUtils:
 
-    logging.info(f"Sending email via SMTP host: {Config.SMTP_HOST}")
+    @staticmethod
+    def send_email(
+        subject: str,
+        body: str,
+        to: str,
+        is_html: bool = False,
+    ) -> bool:
+        """
+        Send email using SMTP config from Config
+        :param subject: Email subject
+        :param body: Email body
+        :param to: Recipient email
+        :param is_html: Is HTML content
+        :return: None
+        """
+        sender = Config.SMTP_USER
+        msg = MIMEMultipart()
+        msg["From"] = sender
+        msg["To"] = to
+        msg["Subject"] = subject
 
-    if is_html:
-        msg.attach(MIMEText(body, "html", "utf-8"))
-    else:
-        msg.attach(MIMEText(body, "plain", "utf-8"))
+        logging.info(f"Sending email via SMTP host: {Config.SMTP_HOST}")
 
-    try:
-        if Config.SMTP_PORT == 465:
-            server = smtplib.SMTP_SSL(Config.SMTP_HOST, Config.SMTP_PORT)
+        if is_html:
+            msg.attach(MIMEText(body, "html", "utf-8"))
         else:
-            server = smtplib.SMTP(Config.SMTP_HOST, Config.SMTP_PORT)
-            server.starttls()
-        server.login(Config.SMTP_USER, Config.SMTP_PASSWORD)
-        server.sendmail(sender, [to], msg.as_string())
-        server.quit()
-        logging.info(f"Email sent successfully to {to}")
-    except Exception as e:
-        logging.error(f"Failed to send email: {e}")
-        raise
+            msg.attach(MIMEText(body, "plain", "utf-8"))
+
+        try:
+            if Config.SMTP_PORT == 465:
+                server = smtplib.SMTP_SSL(Config.SMTP_HOST, Config.SMTP_PORT)
+            else:
+                server = smtplib.SMTP(Config.SMTP_HOST, Config.SMTP_PORT)
+                server.starttls()
+            server.login(Config.SMTP_USER, Config.SMTP_PASSWORD)
+            server.sendmail(sender, [to], msg.as_string())
+            server.quit()
+            logging.info(f"Email sent successfully to {to}")
+            return True
+        except Exception as e:
+            logging.error(f"Failed to send email: {e}")
+            return False

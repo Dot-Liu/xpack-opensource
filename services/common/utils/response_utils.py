@@ -9,5 +9,5 @@ class ResponseUtils:
         return {"code": code, "message": message, "data": data, "pagination": {"page": page_num, "page_size": page_size, "total": total}}
 
     @staticmethod
-    def error(message="error", code=1, data=None):
+    def error(message="error", code=500, data=None):
         return {"code": code, "message": message, "data": data}
