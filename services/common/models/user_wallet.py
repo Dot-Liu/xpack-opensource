@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, Numeric, DateTime
+from sqlalchemy import String, Numeric, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 from services.common.models.base import Base
@@ -7,10 +7,10 @@ from services.common.models.base import Base
 class UserWallet(Base):
     __tablename__ = "user_wallet"
 
-    id: Mapped[int] = mapped_column(
-        BigInteger,
+    id: Mapped[str] = mapped_column(
+        String(36),
         primary_key=True,
-        autoincrement=True,
+        autoincrement=False,
         comment="Primary key, auto-incremented ID",
     )
     user_id: Mapped[str] = mapped_column(

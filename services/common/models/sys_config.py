@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, DateTime, text
+from sqlalchemy import BigInteger, String, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 from services.common.models.base import Base
@@ -7,21 +7,15 @@ from services.common.models.base import Base
 class SysConfig(Base):
     __tablename__ = "sys_config"
 
-    id: Mapped[int] = mapped_column(
-        BigInteger,
+    id: Mapped[str] = mapped_column(
+        String(36),
         primary_key=True,
-        autoincrement=True,
-        comment="Primary key, auto-incremented ID",
+        autoincrement=False,
+        comment="Primary key",
     )
-    key: Mapped[str] = mapped_column(
-        String(255), unique=True, nullable=False, comment="Configuration key"
-    )
-    value: Mapped[str] = mapped_column(
-        text.Text, nullable=False, comment="Configuration value"
-    )
-    description: Mapped[str] = mapped_column(
-        text.Text, nullable=False, comment="Configuration description"
-    )
+    key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Configuration key")
+    value: Mapped[str] = mapped_column(String, nullable=False, comment="Configuration value")
+    description: Mapped[str] = mapped_column(String, nullable=False, comment="Configuration description")
     created_at: Mapped[DateTime] = mapped_column(
         DateTime,
         nullable=True,

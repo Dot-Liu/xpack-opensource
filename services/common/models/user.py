@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, Integer, String, Enum, Boolean, DateTime, text
+from sqlalchemy import Column, BigInteger, Integer, String, Enum, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 from enum import Enum as PyEnum
@@ -13,13 +13,12 @@ class RegisterType(PyEnum):
 class User(Base):
     __tablename__ = "user"
 
-    id: Mapped[int] = mapped_column(
-        BigInteger,
+    id: Mapped[str] = mapped_column(
+        String(36),
         primary_key=True,
-        autoincrement=True,
+        autoincrement=False,
         comment="Primary key, auto-incremented ID",
     )
-    user_id: Mapped[str] = mapped_column(String(36), unique=True, nullable=False, comment="Unique user ID (UUID)")
     name: Mapped[str] = mapped_column(String(100), nullable=False, comment="Username")
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Email address")
     avatar: Mapped[str] = mapped_column(String(255), comment="Avatar URL")
@@ -38,10 +37,12 @@ class User(Base):
     register_type: Mapped[RegisterType] = mapped_column(
         Enum(RegisterType, values_callable=lambda obj: [e.value for e in obj]), nullable=False, comment="Registration method"
     )
-    role_id: Mapped[int] = mapped_column(Integer,
+    role_id: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
         default=False,
-        comment="1: admin, 2: user",)
+        comment="1: admin, 2: user",
+    )
     last_login_at = Column(DateTime, comment="Last login timestamp")
     last_login_ip = Column(String(45), comment="Last login IP (IPv4/IPv6 compatible)")
     created_at = Column(
