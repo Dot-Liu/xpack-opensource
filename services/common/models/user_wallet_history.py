@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, Enum, Numeric, Integer, DateTime, text
+from sqlalchemy import String, Enum, Numeric, Integer, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 from enum import Enum as PyEnum
@@ -21,11 +21,11 @@ class TransactionType(PyEnum):
 class UserWalletHistory(Base):
     __tablename__ = "user_wallet_history"
 
-    id: Mapped[int] = mapped_column(
-        BigInteger,
+    id: Mapped[str] = mapped_column(
+        String(36),
         primary_key=True,
-        autoincrement=True,
-        comment="Primary key, auto-incremented ID",
+        autoincrement=False,
+        comment="Primary key",
     )
     history_id: Mapped[str] = mapped_column(
         String(36), unique=True, nullable=False, comment="Transaction history unique ID (UUID format)"
@@ -59,7 +59,7 @@ class UserWalletHistory(Base):
         String(255), nullable=True, comment="Payment channel user ID"
     )
     callback_data: Mapped[str] = mapped_column(
-        text.Text, nullable=True, comment="Payment callback information"
+        String, nullable=True, comment="Payment callback information"
     )
     created_at: Mapped[DateTime] = mapped_column(
         DateTime,

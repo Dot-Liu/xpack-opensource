@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, DateTime
+from sqlalchemy import String, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 from services.common.models.base import Base
@@ -7,11 +7,11 @@ from services.common.models.base import Base
 class UserAccessToken(Base):
     __tablename__ = "user_access_token"
 
-    id: Mapped[int] = mapped_column(
-        BigInteger,
+    id: Mapped[str] = mapped_column(
+        String(36),
         primary_key=True,
-        autoincrement=True,
-        comment="Primary key, auto-incremented ID",
+        autoincrement=False,
+        comment="Primary key",
     )
     user_id: Mapped[str] = mapped_column(
         String(36), nullable=False, comment="User unique ID (UUID format)"
