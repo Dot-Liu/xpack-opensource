@@ -1,15 +1,6 @@
-from sqlalchemy import (
-    Column,
-    BigInteger,
-    String,
-    Enum,
-    Numeric,
-    Integer,
-    DateTime,
-    ForeignKey,
-    text,
-)
+from sqlalchemy import Column, BigInteger, String, Enum, Numeric, Integer, DateTime, text
 from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped, mapped_column
 from enum import Enum as PyEnum
 from services.common.models.base import Base
 
@@ -30,55 +21,55 @@ class TransactionType(PyEnum):
 class UserWalletHistory(Base):
     __tablename__ = "user_wallet_history"
 
-    id = Column(
+    id: Mapped[int] = mapped_column(
         BigInteger,
         primary_key=True,
         autoincrement=True,
         comment="Primary key, auto-incremented ID",
     )
-    history_id = Column(
-        String(36),
-        unique=True,
+    history_id: Mapped[str] = mapped_column(
+        String(36), unique=True, nullable=False, comment="Transaction history unique ID (UUID format)"
+    )
+    user_id: Mapped[str] = mapped_column(
+        String(36), nullable=False, comment="User unique ID (UUID format)"
+    )
+    payment_method: Mapped[PaymentMethod] = mapped_column(
+        Enum(PaymentMethod, values_callable=lambda obj: [e.value for e in obj]),
         nullable=False,
-        comment="Unique transaction history ID (UUID)",
+        comment="Payment method: platform, stripe, alipay, wechat",
     )
-    user_id = Column(
-        String(36),
-        ForeignKey("user.user_id", ondelete="CASCADE", onupdate="CASCADE"),
+    amount: Mapped[float] = mapped_column(
+        Numeric(10, 2), nullable=False, comment="Transaction amount (positive for deposit, negative for consumption, 2 decimal places)"
+    )
+    balance_after: Mapped[float] = mapped_column(
+        Numeric(10, 2), nullable=False, comment="Balance after transaction (2 decimal places)"
+    )
+    type: Mapped[TransactionType] = mapped_column(
+        Enum(TransactionType, values_callable=lambda obj: [e.value for e in obj]),
         nullable=False,
-        comment="User ID (UUID)",
+        comment="Transaction type: deposit, consume, refund",
     )
-    payment_method = Column(
-        Enum(PaymentMethod), nullable=False, comment="Payment method"
+    status: Mapped[int] = mapped_column(
+        Integer, nullable=False, comment="Order status: 0=new, 1=completed, 2=pending"
     )
-    amount = Column(
-        Numeric(10, 2),
-        nullable=False,
-        comment="Transaction amount (positive=deposit, negative=consumption)",
+    transaction_id: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=True, comment="Payment platform transaction ID"
     )
-    balance_after = Column(
-        Numeric(10, 2), nullable=False, comment="Balance after transaction"
+    channel_user_id: Mapped[str] = mapped_column(
+        String(255), nullable=True, comment="Payment channel user ID"
     )
-    type = Column(Enum(TransactionType), nullable=False, comment="Transaction type")
-    status = Column(
-        Integer,
-        nullable=False,
-        comment="Transaction status: 0=new, 1=completed, 2=pending",
+    callback_data: Mapped[str] = mapped_column(
+        text.Text, nullable=True, comment="Payment callback information"
     )
-    transaction_id = Column(
-        String(255), unique=True, comment="Payment platform transaction ID"
-    )
-    channel_user_id = Column(String(255), comment="Payment channel user ID")
-    callback_data = Column(String, comment="Payment callback data")
-    created_at = Column(
+    created_at: Mapped[DateTime] = mapped_column(
         DateTime,
-        nullable=False,
+        nullable=True,
         server_default=func.current_timestamp(),
         comment="Creation timestamp",
     )
-    updated_at = Column(
+    updated_at: Mapped[DateTime] = mapped_column(
         DateTime,
-        nullable=False,
+        nullable=True,
         server_default=func.current_timestamp(),
         server_onupdate=func.current_timestamp(),
         comment="Last update timestamp",

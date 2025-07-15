@@ -10,11 +10,6 @@ class RegisterType(PyEnum):
     GOOGLE = "google"
 
 
-class UserType(PyEnum):
-    USER = "user"
-    ADMIN = "admin"
-
-
 class User(Base):
     __tablename__ = "user"
 
@@ -43,9 +38,10 @@ class User(Base):
     register_type: Mapped[RegisterType] = mapped_column(
         Enum(RegisterType, values_callable=lambda obj: [e.value for e in obj]), nullable=False, comment="Registration method"
     )
-    user_type: Mapped[UserType] = mapped_column(
-        Enum(UserType, values_callable=lambda obj: [e.value for e in obj]), nullable=False, default=UserType.USER, comment="User role"
-    )
+    role_id: Mapped[int] = mapped_column(Integer,
+        nullable=False,
+        default=False,
+        comment="1: admin, 2: user",)
     last_login_at = Column(DateTime, comment="Last login timestamp")
     last_login_ip = Column(String(45), comment="Last login IP (IPv4/IPv6 compatible)")
     created_at = Column(

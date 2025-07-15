@@ -1,38 +1,36 @@
-from sqlalchemy import Column, BigInteger, String, Numeric, DateTime, ForeignKey, text
+from sqlalchemy import Column, BigInteger, String, Numeric, DateTime
 from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped, mapped_column
 from services.common.models.base import Base
 
 
 class UserWallet(Base):
     __tablename__ = "user_wallet"
 
-    id = Column(
+    id: Mapped[int] = mapped_column(
         BigInteger,
         primary_key=True,
         autoincrement=True,
         comment="Primary key, auto-incremented ID",
     )
-    user_id = Column(
-        String(36),
-        ForeignKey("user.user_id", ondelete="CASCADE", onupdate="CASCADE"),
-        nullable=False,
-        comment="User ID (UUID)",
+    user_id: Mapped[str] = mapped_column(
+        String(36), unique=True, nullable=False, comment="User unique ID (UUID format)"
     )
-    balance = Column(
-        Numeric(10, 2), nullable=False, default=0.00, comment="Wallet balance"
+    balance: Mapped[float] = mapped_column(
+        Numeric(10, 2), nullable=False, comment="Wallet balance (2 decimal places)"
     )
-    frozen_balance = Column(
-        Numeric(10, 2), nullable=False, default=0.00, comment="Frozen balance"
+    frozen_balance: Mapped[float] = mapped_column(
+        Numeric(10, 2), nullable=False, comment="Frozen balance (2 decimal places)"
     )
-    created_at = Column(
+    created_at: Mapped[DateTime] = mapped_column(
         DateTime,
-        nullable=False,
+        nullable=True,
         server_default=func.current_timestamp(),
         comment="Creation timestamp",
     )
-    updated_at = Column(
+    updated_at: Mapped[DateTime] = mapped_column(
         DateTime,
-        nullable=False,
+        nullable=True,
         server_default=func.current_timestamp(),
         server_onupdate=func.current_timestamp(),
         comment="Last update timestamp",

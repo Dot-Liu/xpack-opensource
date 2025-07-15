@@ -1,20 +1,12 @@
-from sqlalchemy import (
-    Column,
-    BigInteger,
-    String,
-    Enum,
-    Numeric,
-    Boolean,
-    DateTime,
-    text,
-)
+from sqlalchemy import Column, BigInteger, String, Enum, Numeric, Integer, DateTime, text
 from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped, mapped_column
 from enum import Enum as PyEnum
 from services.common.models.base import Base
 
 
 class AuthMethod(PyEnum):
-    NONE = "none"
+    FREE = "free"
     APIKEY = "apikey"
     TOKEN = "token"
 
@@ -28,55 +20,58 @@ class ChargeType(PyEnum):
 class McpService(Base):
     __tablename__ = "mcp_service"
 
-    id = Column(
+    id: Mapped[int] = mapped_column(
         BigInteger,
         primary_key=True,
         autoincrement=True,
         comment="Primary key, auto-incremented ID",
     )
-    service_id = Column(
-        String(36), unique=True, nullable=False, comment="Unique MCP service ID (UUID)"
+    service_id: Mapped[str] = mapped_column(
+        String(36), unique=True, nullable=False, comment="MCP service unique ID (UUID format)"
     )
-    name = Column(String(100), nullable=False, comment="Service name")
-    slug_name = Column(
-        String(100), unique=True, nullable=False, comment="Unique slug for the service"
+    name: Mapped[str] = mapped_column(
+        String(255), nullable=False, comment="Service name"
     )
-    short_description = Column(
-        String(500), nullable=False, comment="Short service description"
+    slug_name: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=False, comment="Unique slug name for the service"
     )
-    long_description = Column(String, comment="Detailed description in Markdown")
-    auth_method = Column(
-        Enum(AuthMethod),
+    short_description: Mapped[str] = mapped_column(
+        text.Text, nullable=False, comment="Short description of the service"
+    )
+    long_description: Mapped[str] = mapped_column(
+        text.LongText, nullable=True, comment="Detailed description of the service (Markdown format)"
+    )
+    auth_method: Mapped[AuthMethod] = mapped_column(
+        Enum(AuthMethod, values_callable=lambda obj: [e.value for e in obj]),
         nullable=False,
-        default=AuthMethod.NONE,
-        comment="Authentication method",
+        comment="Authentication method: free, apikey, token",
     )
-    auth_header = Column(String(100), comment="Authentication header name")
-    auth_token = Column(String(255), comment="Static authentication token")
-    charge_type = Column(
-        Enum(ChargeType),
+    auth_header: Mapped[str] = mapped_column(
+        String(255), nullable=True, comment="Authentication header name"
+    )
+    auth_token: Mapped[str] = mapped_column(
+        String(255), nullable=True, comment="Authentication token value"
+    )
+    charge_type: Mapped[ChargeType] = mapped_column(
+        Enum(ChargeType, values_callable=lambda obj: [e.value for e in obj]),
         nullable=False,
-        default=ChargeType.FREE,
-        comment="Billing method",
+        comment="Charge type: free, per_call, per_token",
     )
-    price = Column(
-        Numeric(10, 2), nullable=False, default=0.00, comment="Price per unit"
+    price: Mapped[float] = mapped_column(
+        Numeric(10, 2), nullable=False, comment="Service price (2 decimal places)"
     )
-    enabled = Column(
-        Boolean,
-        nullable=False,
-        default=True,
-        comment="Service status: 0=disabled, 1=enabled",
+    enabled: Mapped[int] = mapped_column(
+        Integer, nullable=True, comment="Service status: 0=disabled, 1=enabled"
     )
-    created_at = Column(
+    created_at: Mapped[DateTime] = mapped_column(
         DateTime,
-        nullable=False,
+        nullable=True,
         server_default=func.current_timestamp(),
         comment="Creation timestamp",
     )
-    updated_at = Column(
+    updated_at: Mapped[DateTime] = mapped_column(
         DateTime,
-        nullable=False,
+        nullable=True,
         server_default=func.current_timestamp(),
         server_onupdate=func.current_timestamp(),
         comment="Last update timestamp",
