@@ -64,3 +64,25 @@ uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --reload
     }
 }
 ```
+
+## 环境说明
+### 开发环境
+
+**Redis 配置**  
+- Host：120.79.213.162  
+- Port：6379  
+- Password：redis_6sJZDm  
+- DB Index：0  
+
+**MySQL 配置**  
+- Host：120.79.213.162  
+- Port：3306  
+- Username：root  
+- Password：mysql_ZTdhRB
+
+**RabbitMQ 配置**  
+- Host：120.79.213.162  
+- Port：5672  
+- Dashboard：[15672](http://120.79.213.162:15672/)  
+- Username：rabbitmq  
+- Password：rabbitmq_Gs123dA
