@@ -19,8 +19,8 @@ def init_db():
     """初始化数据库，创建所有表"""
     try:
         # 导入所有模型以确保它们被注册
-        from .models import user, user_wallet, user_wallet_history, user_access_token, sys_config, mcp_service, mcp_tool_api
-        
+        from .models import user, user_wallet, user_wallet_history, user_access_token, sys_config, mcp_service, mcp_tool_api, user_apikey
+
         # 创建所有表
         Base.metadata.create_all(bind=engine)
         print("数据库表创建成功")

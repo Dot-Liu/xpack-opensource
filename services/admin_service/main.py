@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from services.common.config import Config
 from services.admin_service.controllers import user_contoller
 from services.admin_service.controllers import auth_controller
+from services.admin_service.controllers import user_apikey_controller
 from services.admin_service.middleware import AuthMiddleware
 import logging
 
@@ -21,6 +22,7 @@ app.add_middleware(
 
 app.include_router(user_contoller.router, prefix="/admin/user")
 app.include_router(auth_controller.router, prefix="/admin/auth")
+app.include_router(user_apikey_controller.router, prefix="/admin/apikey")
 
 logging.basicConfig(level=logging.DEBUG)
 
