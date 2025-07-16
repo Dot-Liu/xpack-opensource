@@ -70,3 +70,13 @@ class UserWalletHistoryRepository:
         obj.transaction_id = transaction_id
         self.db.commit()
         return True
+    def success_order_list(self,offset:int,limit:int) -> tuple[int,list[UserWalletHistory]]:
+        """
+        订单列表
+        :return: 
+        """
+        total = self.db.query(UserWalletHistory).filter(UserWalletHistory.status == 1).count()
+        if total < offset:
+            return total,[]
+        history = self.db.query(UserWalletHistory).filter(UserWalletHistory.status == 1).order_by(UserWalletHistory.created_at.desc()).offset(offset).limit(limit).all()
+        return total,history
