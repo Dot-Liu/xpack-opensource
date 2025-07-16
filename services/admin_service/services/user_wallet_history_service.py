@@ -31,3 +31,21 @@ def add_deposit(db: Session, user_id: str, amount: float, payment_method: str) -
     db.commit()
     db.refresh(history)
     return history
+
+
+def add_refund(db: Session, user_id: str, amount: float, payment_method: str, transaction_id: str) -> UserWalletHistory:
+    history = UserWalletHistory(
+        id=str(uuid4()),
+        user_id=user_id,
+        payment_method=PaymentMethod(payment_method),
+        amount=amount,
+        balance_after=0.00,
+        type=TransactionType.REFUND,
+        status=0,  # 2=已退款
+        transaction_id=transaction_id,
+        channel_user_id=None,
+    )
+    db.add(history)
+    db.commit()
+    db.refresh(history)
+    return history
