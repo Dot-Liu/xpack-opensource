@@ -27,3 +27,7 @@ class UserService:
             self.user_wallet_repository.create(user_id=user.id)
             return user
         return None
+
+    def delete(self, user_id: str) -> Optional[User]:
+        """删除用户"""
+        return self.user_repository.delete(user_id)
