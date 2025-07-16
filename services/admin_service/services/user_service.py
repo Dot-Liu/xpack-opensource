@@ -31,3 +31,7 @@ class UserService:
     def delete(self, user_id: str) -> Optional[User]:
         """删除用户"""
         return self.user_repository.delete(user_id)
+
+    def get_user_list(self, offset: int, limit: int) -> tuple[int, list[User]]:
+        """获取用户列表"""
+        return self.user_repository.get_user_list(offset, limit)
