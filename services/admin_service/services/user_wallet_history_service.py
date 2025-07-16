@@ -1,51 +1,14 @@
 from sqlalchemy.orm import Session
 from services.common.models.user_wallet_history import UserWalletHistory
-from services.common.models.user_wallet_history import TransactionType, PaymentMethod
-from uuid import uuid4
+from services.admin_service.repositories.user_wallet_history_repository import UserWalletHistoryRepository
 
 
-def add_deposit(db: Session, user_id: str, amount: float, payment_method: str) -> UserWalletHistory:
-    """
-    Add a deposit transaction to the user's wallet history.
-    Args:
-        db (Session): The database session.
-        user_id (str): The ID of the user making the deposit.
-        amount (float): The amount to deposit.
-        payment_method (str): The payment method used for the deposit.
-    Returns:
-        UserWalletHistory: The created wallet history record.
-    """
+class UserWalletHistoryService:
+    def __init__(self, db: Session):
+        self.user_wallet_history_repository = UserWalletHistoryRepository(db)
 
-    history = UserWalletHistory(
-        id=str(uuid4()),
-        user_id=user_id,
-        payment_method=PaymentMethod(payment_method),
-        amount=amount,
-        balance_after=0.00,
-        type=TransactionType.DEPOSIT,
-        status=0,
-        transaction_id=None,
-        channel_user_id=None,
-    )
-    db.add(history)
-    db.commit()
-    db.refresh(history)
-    return history
+    def add_deposit(self, user_id: str, amount: float, payment_method: str) -> UserWalletHistory:
+        return self.user_wallet_history_repository.add_deposit(user_id, amount, payment_method)
 
-
-def add_refund(db: Session, user_id: str, amount: float, payment_method: str, transaction_id: str) -> UserWalletHistory:
-    history = UserWalletHistory(
-        id=str(uuid4()),
-        user_id=user_id,
-        payment_method=PaymentMethod(payment_method),
-        amount=amount,
-        balance_after=0.00,
-        type=TransactionType.REFUND,
-        status=0,  # 2=已退款
-        transaction_id=transaction_id,
-        channel_user_id=None,
-    )
-    db.add(history)
-    db.commit()
-    db.refresh(history)
-    return history
+    def add_refund(self, user_id: str, amount: float, payment_method: str, transaction_id: str) -> UserWalletHistory:
+        return self.user_wallet_history_repository.add_refund(user_id, amount, payment_method, transaction_id)
