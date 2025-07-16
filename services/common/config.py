@@ -31,3 +31,6 @@ class Config:
     RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
     RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
     RABBITMQ_VHOST = os.getenv("RABBITMQ_VHOST", "/")
+    
+    pay_success_url = os.getenv("PAY_SUCCESS_URL", "http://localhost:3000/payment/success")
+    pay_cancel_url = os.getenv("PAY_CANCEL_URL", "http://localhost:3000/payment/cancel")

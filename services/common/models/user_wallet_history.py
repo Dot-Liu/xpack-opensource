@@ -27,9 +27,6 @@ class UserWalletHistory(Base):
         autoincrement=False,
         comment="Primary key",
     )
-    history_id: Mapped[str] = mapped_column(
-        String(36), unique=True, nullable=False, comment="Transaction history unique ID (UUID format)"
-    )
     user_id: Mapped[str] = mapped_column(
         String(36), nullable=False, comment="User unique ID (UUID format)"
     )
