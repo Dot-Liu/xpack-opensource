@@ -4,6 +4,7 @@ from services.common.config import Config
 from services.admin_service.controllers import user_contoller
 from services.admin_service.controllers import auth_controller
 from services.admin_service.controllers import user_apikey_controller
+from services.admin_service.controllers import payment_controller
 from services.admin_service.controllers import user_manager
 from services.admin_service.middleware import AuthMiddleware
 import logging
@@ -21,10 +22,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(user_contoller.router, prefix="/admin/user")
-app.include_router(auth_controller.router, prefix="/admin/auth")
-app.include_router(user_apikey_controller.router, prefix="/admin/apikey")
-app.include_router(user_manager.router, prefix="/admin/user_manager")
+app.include_router(user_contoller.router, prefix="/api/user")
+app.include_router(auth_controller.router, prefix="/api/auth")
+app.include_router(user_apikey_controller.router, prefix="/api/apikey")
+app.include_router(user_manager.router, prefix="/api/user_manager")
+app.include_router(payment_controller.router, prefix="/api/payment")
 
 logging.basicConfig(level=logging.DEBUG)
 
