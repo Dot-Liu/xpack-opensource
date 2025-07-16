@@ -7,6 +7,8 @@ from services.admin_service.controllers import user_apikey_controller
 from services.admin_service.controllers import payment_controller
 from services.admin_service.controllers import order_controller
 from services.admin_service.controllers import user_manager
+from services.admin_service.controllers import sys_config_controller
+
 from services.admin_service.middleware import AuthMiddleware
 import logging
 
@@ -29,6 +31,7 @@ app.include_router(user_apikey_controller.router, prefix="/api/apikey")
 app.include_router(user_manager.router, prefix="/api/user_manager")
 app.include_router(payment_controller.router, prefix="/api/payment")
 app.include_router(order_controller.router, prefix="/api/order")
+app.include_router(sys_config_controller.router, prefix="/api/sysconfig")
 
 logging.basicConfig(level=logging.DEBUG)
 

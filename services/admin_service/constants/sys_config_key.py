@@ -1,0 +1,6 @@
+KEY_PLATFORM_NAME = "platform_name"
+KEY_PLATFORM_LOGO = "platform_logo"
+KEY_ADMIN_USERNAME = "admin_username"
+KEY_ADMIN_PASSWORD = "admin_password"
+KEY_LOGIN_GOOGLE_CLIENT = "login_google_client_id"
+KEY_LOGIN_GOOGLE_SECRET = "login_google_client_secret" 
