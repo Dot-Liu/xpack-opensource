@@ -1,0 +1,348 @@
+import json
+import logging
+from typing import Optional, List, Dict
+
+logging = logging.getLogger(__name__)
+
+
+class OpenApiForAI:
+    """为AI生成API调用参数而优化的简化结构"""
+
+    def __init__(self, title: str, version: str, description: str = ""):
+        self.title = title
+        self.version = version
+        self.description = description
+        self.apis: List["ApiEndpoint"] = []
+
+    def add_api(self, api: "ApiEndpoint"):
+        self.apis.append(api)
+
+    def to_dict(self):
+        return {"title": self.title, "version": self.version, "description": self.description, "apis": [api.to_dict() for api in self.apis]}
+
+
+class ApiEndpoint:
+    """AI友好的API端点表示"""
+
+    def __init__(
+        self,
+        path: str,
+        method: str,
+        summary: str = "",
+        description: str = "",
+        tags: Optional[List[str]] = None,
+        path_params: Optional[List[Dict]] = None,
+        query_params: Optional[List[Dict]] = None,
+        header_params: Optional[List[Dict]] = None,
+        request_body_schema: Optional[Dict] = None,
+        response_schema: Optional[Dict] = None,
+        response_example: Optional[Dict] = None,
+        response_headers: Optional[List[Dict]] = None,
+        examples: Optional[Dict] = None,
+    ):
+        self.path = path
+        self.method = method.upper()
+        self.summary = summary
+        self.description = description
+        self.tags = tags or []
+        self.path_params = path_params or []
+        self.query_params = query_params or []
+        self.header_params = header_params or []
+        self.request_body_schema = request_body_schema
+        self.response_schema = response_schema
+        self.response_example = response_example
+        self.response_headers = response_headers or []
+        self.examples = examples or {}
+
+    def to_dict(self):
+        result = {
+            "path": self.path,
+            "method": self.method,
+            "summary": self.summary,
+            "description": self.description,
+            "tags": self.tags,
+        }
+
+        # 只包含非空的参数
+        if self.path_params:
+            result["path_params"] = self.path_params
+        if self.query_params:
+            result["query_params"] = self.query_params
+        if self.header_params:
+            result["header_params"] = self.header_params
+        if self.request_body_schema:
+            result["request_body_schema"] = self.request_body_schema
+        if self.response_schema:
+            result["response_schema"] = self.response_schema
+        if self.response_example:
+            result["response_example"] = self.response_example
+        if self.response_headers:
+            result["response_headers"] = self.response_headers
+        if self.examples:
+            result["examples"] = self.examples
+
+        return result
+
+
+def convert_openapi_for_ai(openapi_str: str) -> OpenApiForAI:
+    """
+    将 OpenAPI 文档转换为 AI 友好的简化结构
+    """
+
+    def resolve_ref(ref_path: str, openapi_data: dict) -> dict:
+        """递归解析 $ref 引用"""
+        if not ref_path.startswith("#/"):
+            return {}
+
+        # 移除开头的 "#/" 并按 "/" 分割路径
+        path_parts = ref_path[2:].split("/")
+        current = openapi_data
+
+        # 遍历路径获取引用的对象
+        for part in path_parts:
+            if isinstance(current, dict) and part in current:
+                current = current[part]
+            else:
+                return {}
+
+        # 如果引用的对象中还有 $ref，则递归解析
+        if isinstance(current, dict):
+            return resolve_schema_refs(current, openapi_data)
+        return current
+
+    def resolve_schema_refs(schema: dict, openapi_data: dict) -> dict:
+        """递归解析 schema 中的所有 $ref 引用"""
+        if not isinstance(schema, dict):
+            return schema
+
+        # 如果是 $ref 引用，直接解析并返回引用的内容
+        if "$ref" in schema:
+            return resolve_ref(schema["$ref"], openapi_data)
+
+        # 递归处理所有字段
+        resolved_schema = {}
+        for key, value in schema.items():
+            if isinstance(value, dict):
+                resolved_schema[key] = resolve_schema_refs(value, openapi_data)
+            elif isinstance(value, list):
+                resolved_schema[key] = [resolve_schema_refs(item, openapi_data) if isinstance(item, dict) else item for item in value]
+            else:
+                resolved_schema[key] = value
+
+        return resolved_schema
+
+    def extract_schema_info(schema: dict) -> dict:
+        """提取schema的关键信息，简化为AI易理解的格式"""
+        if not schema:
+            return {}
+
+        info = {}
+
+        # 基本类型信息
+        if "type" in schema:
+            info["type"] = schema["type"]
+        if "format" in schema:
+            info["format"] = schema["format"]
+        if "description" in schema:
+            info["description"] = schema["description"]
+        if "example" in schema:
+            info["example"] = schema["example"]
+        if "enum" in schema:
+            info["enum"] = schema["enum"]
+        if "default" in schema:
+            info["default"] = schema["default"]
+
+        # 数值限制
+        for constraint in ["minimum", "maximum", "minLength", "maxLength", "pattern"]:
+            if constraint in schema:
+                info[constraint] = schema[constraint]
+
+        # 必填字段
+        if "required" in schema:
+            info["required"] = schema["required"]
+
+        # 处理数组类型
+        if schema.get("type") == "array" and "items" in schema:
+            info["items"] = extract_schema_info(schema["items"])
+
+        # 处理对象类型
+        if schema.get("type") == "object" and "properties" in schema:
+            info["properties"] = {}
+            for prop_name, prop_schema in schema["properties"].items():
+                info["properties"][prop_name] = extract_schema_info(prop_schema)
+
+        return info
+
+    try:
+        # 解析 JSON 字符串
+        openapi_data = json.loads(openapi_str)
+
+        # 获取基本信息
+        info = openapi_data.get("info", {})
+        title = info.get("title", "Unknown API")
+        version = info.get("version", "1.0.0")
+        description = info.get("description", "")
+
+        # 创建AI友好的结构
+        ai_info = OpenApiForAI(title=title, version=version, description=description)
+
+        # 解析路径和操作
+        paths = openapi_data.get("paths", {})
+
+        for path, path_item in paths.items():
+            # 遍历每个路径下的 HTTP 方法
+            for method, operation in path_item.items():
+                if method.lower() in ["get", "post", "put", "delete", "patch", "head", "options"]:
+                    # 提取操作信息
+                    summary = operation.get("summary", "")
+                    op_description = operation.get("description", "")
+                    tags = operation.get("tags", [])
+
+                    # 分类参数
+                    path_params = []
+                    query_params = []
+                    header_params = []
+
+                    # 解析参数并解析其中的 $ref
+                    if "parameters" in operation:
+                        for param in operation["parameters"]:
+                            # 如果参数本身是 $ref，先解析
+                            if "$ref" in param:
+                                param = resolve_ref(param["$ref"], openapi_data)
+
+                            # 解析参数schema中的 $ref
+                            resolved_schema = resolve_schema_refs(param.get("schema", {}), openapi_data)
+
+                            param_info = {
+                                "name": param.get("name", ""),
+                                "description": param.get("description", ""),
+                                "required": param.get("required", False),
+                                "schema": extract_schema_info(resolved_schema),
+                            }
+
+                            if param.get("in") == "path":
+                                path_params.append(param_info)
+                            elif param.get("in") == "query":
+                                query_params.append(param_info)
+                            elif param.get("in") == "header":
+                                header_params.append(param_info)
+
+                    # 提取请求体schema
+                    request_body_schema = None
+                    examples = {}
+
+                    if "requestBody" in operation:
+                        req_body = operation["requestBody"]
+                        # 如果请求体本身是 $ref，先解析
+                        if "$ref" in req_body:
+                            req_body = resolve_ref(req_body["$ref"], openapi_data)
+
+                        content = req_body.get("content", {})
+                        # 优先使用 application/json
+                        if "application/json" in content:
+                            json_content = content["application/json"]
+                            if "schema" in json_content:
+                                resolved_schema = resolve_schema_refs(json_content["schema"], openapi_data)
+                                request_body_schema = extract_schema_info(resolved_schema)
+                            if "example" in json_content:
+                                examples["request_body"] = json_content["example"]
+                        elif content:
+                            # 使用第一个可用的内容类型
+                            first_content = next(iter(content.values()))
+                            if "schema" in first_content:
+                                resolved_schema = resolve_schema_refs(first_content["schema"], openapi_data)
+                                request_body_schema = extract_schema_info(resolved_schema)
+                            if "example" in first_content:
+                                examples["request_body"] = first_content["example"]
+
+                    # 提取响应参数说明、响应示例和响应头
+                    response_schema = None
+                    response_example = None
+                    response_headers = []
+
+                    if "responses" in operation:
+                        # 优先获取200响应
+                        success_response_key = (
+                            "200" if "200" in operation["responses"] else "201" if "201" in operation["responses"] else None
+                        )
+                        if success_response_key:
+                            response = operation["responses"][success_response_key]
+                            # 如果响应本身是 $ref，先解析
+                            if "$ref" in response:
+                                response = resolve_ref(response["$ref"], openapi_data)
+
+                            # 提取响应内容
+                            if "content" in response:
+                                content = response["content"]
+                                if "application/json" in content:
+                                    json_content = content["application/json"]
+                                    if "schema" in json_content:
+                                        resolved_schema = resolve_schema_refs(json_content["schema"], openapi_data)
+                                        response_schema = extract_schema_info(resolved_schema)
+                                    if "example" in json_content:
+                                        response_example = json_content["example"]
+
+                        # 提取所有响应的头信息
+                        for status_code, response in operation["responses"].items():
+                            # 如果响应本身是 $ref，先解析
+                            if "$ref" in response:
+                                response = resolve_ref(response["$ref"], openapi_data)
+
+                            if "headers" in response:
+                                for header_name, header_info in response["headers"].items():
+                                    resolved_header_info = resolve_schema_refs(header_info, openapi_data)
+                                    header_detail = {
+                                        "name": header_name,
+                                        "description": resolved_header_info.get("description", ""),
+                                        "schema": extract_schema_info(resolved_header_info.get("schema", {})),
+                                        "status_code": status_code,
+                                    }
+                                    response_headers.append(header_detail)
+
+                    # 创建API端点
+                    api_endpoint = ApiEndpoint(
+                        path=path,
+                        method=method,
+                        summary=summary,
+                        description=op_description,
+                        tags=tags,
+                        path_params=path_params if path_params else None,
+                        query_params=query_params if query_params else None,
+                        header_params=header_params if header_params else None,
+                        request_body_schema=request_body_schema,
+                        response_schema=response_schema,
+                        response_example=response_example,
+                        response_headers=response_headers if response_headers else None,
+                        examples=examples if examples else None,
+                    )
+
+                    ai_info.add_api(api_endpoint)
+
+        return ai_info
+
+    except json.JSONDecodeError as e:
+        logging.error(f"JSON 解析错误: {e}")
+        raise ValueError(f"无效的 JSON 格式: {e}")
+    except Exception as e:
+        logging.error(f"转换为AI友好格式时发生错误: {e}")
+        raise ValueError(f"转换失败: {e}")
+
+
+if __name__ == "__main__":
+    # 测试用例：读取 openapi.json 并生成AI友好的结构
+    import os
+
+    # 获取项目根目录
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.join(current_dir, "..", "..", "..")
+    openapi_path = os.path.join(project_root, "docs", "openapi.json")
+
+    with open(openapi_path, "r", encoding="utf-8") as f:
+        openapi_str = f.read()
+
+    # 生成AI友好的简化结构
+    ai_info = convert_openapi_for_ai(openapi_str)
+    ai_output_path = os.path.join(project_root, "openapi_for_ai.json")
+    with open(ai_output_path, "w", encoding="utf-8") as out_f:
+        out_f.write(json.dumps(ai_info.to_dict(), indent=2, ensure_ascii=False))
+    print("AI友好结构 JSON 已输出到 openapi_for_ai.json")

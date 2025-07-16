@@ -1,0 +1,625 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Pet Store API",
+    "description": "A comprehensive API for managing a pet store, including pet creation, retrieval, updates, and file uploads.",
+    "version": "1.0.0",
+    "termsOfService": "https://petstore.example.com/terms",
+    "contact": {
+      "name": "API Support",
+      "email": "support@petstore.example.com",
+      "url": "https://petstore.example.com/support"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.petstore.example.com/v1",
+      "description": "Main production server"
+    },
+    {
+      "url": "https://staging.petstore.example.com/v1",
+      "description": "Staging server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Pets",
+      "description": "Operations related to pet management"
+    },
+    {
+      "name": "Async",
+      "description": "Asynchronous operations"
+    },
+    {
+      "name": "Batch",
+      "description": "Batch operations for multiple resources"
+    }
+  ],
+  "externalDocs": {
+    "description": "Pet Store API Documentation",
+    "url": "https://docs.petstore.example.com"
+  },
+  "paths": {
+    "/pets": {
+      "get": {
+        "tags": ["Pets"],
+        "summary": "List all pets",
+        "description": "Retrieve a paginated list of pets with optional filtering.",
+        "operationId": "listPets",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of pets to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter pets by type",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["dog", "cat", "bird"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of pets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Pet"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Pets"],
+        "summary": "Create a new pet",
+        "description": "Create a new pet in the store with JSON data or file upload.",
+        "operationId": "createPet",
+        "security": [
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "oauth2": ["write:pets"]
+          }
+        ],
+        "requestBody": {
+          "description": "Pet data and optional image",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pet"
+              },
+              "example": {
+                "id": "123",
+                "name": "Fluffy",
+                "type": "dog",
+                "age": 3,
+                "tags": ["friendly", "playful"]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "petData": {
+                    "$ref": "#/components/schemas/Pet"
+                  },
+                  "image": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Optional image of the pet"
+                  }
+                },
+                "required": ["petData"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pet created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "URL of the created pet",
+                "schema": {
+                  "type": "string",
+                  "example": "/pets/123"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pets/{petId}": {
+      "get": {
+        "tags": ["Pets"],
+        "summary": "Get a pet by ID",
+        "description": "Retrieve details of a specific pet by its ID.",
+        "operationId": "getPetById",
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "description": "ID of the pet to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pet found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Pets"],
+        "summary": "Update a pet",
+        "description": "Update an existing pet's details.",
+        "operationId": "updatePet",
+        "security": [
+          {
+            "oauth2": ["write:pets"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "description": "ID of the pet to update",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Updated pet object",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pet"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pet updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Pets"],
+        "summary": "Delete a pet",
+        "description": "Remove a pet from the store.",
+        "operationId": "deletePet",
+        "security": [
+          {
+            "oauth2": ["write:pets"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "description": "ID of the pet to delete",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Pet deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pets/batch": {
+      "post": {
+        "tags": ["Batch"],
+        "summary": "Create multiple pets",
+        "description": "Create multiple pets in a single request.",
+        "operationId": "createPetsBatch",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "List of pet objects to be added",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Pet"
+                },
+                "minItems": 1,
+                "maxItems": 100
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pets created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Pet"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pets/async": {
+      "post": {
+        "tags": ["Async"],
+        "summary": "Create a pet asynchronously",
+        "description": "Create a pet asynchronously and return a task ID.",
+        "operationId": "createPetAsync",
+        "security": [
+          {
+            "oauth2": ["write:pets"]
+          }
+        ],
+        "requestBody": {
+          "description": "Pet object to be added",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pet"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Request accepted, processing in progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "taskId": {
+                      "type": "string",
+                      "example": "task-789"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["pending", "completed", "failed"],
+                      "example": "pending"
+                    }
+                  },
+                  "required": ["taskId", "status"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Pet": {
+        "type": "object",
+        "required": ["id", "name", "type"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the pet",
+            "example": "123"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the pet",
+            "example": "Fluffy"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the pet",
+            "enum": ["dog", "cat", "bird"],
+            "example": "dog"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Age of the pet in years",
+            "example": 3,
+            "minimum": 0
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags associated with the pet",
+            "items": {
+              "type": "string"
+            },
+            "example": ["friendly", "playful"]
+          },
+          "owner": {
+            "type": "object",
+            "description": "Owner of the pet",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "John Doe"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "john.doe@example.com"
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Error code",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Invalid request"
+          },
+          "details": {
+            "type": "array",
+            "description": "Additional error details",
+            "items": {
+              "type": "string"
+            },
+            "example": ["Field 'name' is required"]
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for authentication"
+      },
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://auth.petstore.example.com/oauth/authorize",
+            "tokenUrl": "https://auth.petstore.example.com/oauth/token",
+            "scopes": {
+              "write:pets": "Create and modify pets",
+              "read:pets": "Read pet information"
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "petId": {
+        "name": "petId",
+        "in": "path",
+        "description": "ID of the pet",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
