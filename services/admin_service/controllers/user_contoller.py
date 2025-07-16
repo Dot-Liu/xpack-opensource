@@ -11,14 +11,6 @@ router = APIRouter()
 
 @router.get("/", response_model=dict)
 def get_user(request: Request, db: Session = Depends(get_db)):
-    """
-    Retrieve user information from the request and return a formatted response.
-    Args:
-        request (Request): The incoming request object containing user context.
-        db (Session, optional): Database session dependency.
-    Returns:
-        Response: Success response with user details if found, otherwise error response.
-    """
     user_response = UserResponse()
     user_wallet_resp = UserWalletResponse()
     user_wallet_resp.balance = 0.00
