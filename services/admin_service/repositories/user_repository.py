@@ -16,7 +16,7 @@ class UserRepository:
     def create(self, email: str, register_type: str, role_id: int = 2) -> Optional[User]:
         from uuid import uuid4
         from services.common.models.user import RegisterType
-        
+
         name = email.split("@")[0] if "@" in email else email
 
         user = User(
@@ -30,6 +30,15 @@ class UserRepository:
             role_id=role_id,
         )
         self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def delete(self, user_id: str) -> Optional[User]:
+        user = self.get_by_id(user_id)
+        if not user:
+            return None
+        user.is_deleted = 1
         self.db.commit()
         self.db.refresh(user)
         return user
