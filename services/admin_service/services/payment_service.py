@@ -10,13 +10,15 @@ from services.common.models.user_wallet_history import UserWalletHistory
 from services.common.config import Config
 from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.user_wallet_repository import UserWalletRepository
+from services.admin_service.repositories.user_wallet_history_repository import UserWalletHistoryRepository
 
 
-class UserWalletService:
+class PaymentService:
 
     def __init__(self, db: Session):
         self.user_repository = UserRepository(db)
         self.user_wallet_repository = UserWalletRepository(db)
+        self.user_wallet_history_repository = UserWalletHistoryRepository(db)
 
     logging = logging.getLogger(__name__)
 
@@ -28,7 +30,7 @@ class UserWalletService:
             raise ValueError("User not found.")
 
         # create a new user wallet history entry for the deposit
-        user_wallet_history = user_wallet_history_service.add_deposit(db=db, user_id=user_id, amount=amount, payment_method="stripe")
+        user_wallet_history = self.user_wallet_history_repository.add_deposit(user_id=user_id, amount=amount, payment_method="stripe")
         if user_wallet_history is None:
             logging.error("Failed to create user wallet history for deposit.")
             raise RuntimeError("Failed to create payment.")
@@ -58,10 +60,10 @@ class UserWalletService:
         except Exception as e:
             raise RuntimeError(f"Failed to create payment URL: {str(e)}")
 
-    def stripe_payment_callback(db: Session, payload: str, sig_header: str) -> bool:
+    def stripe_payment_callback(self, payload: str, sig_header: str) -> bool:
         try:
             # 验证 Webhook 签名
-            event = stripe.Webhook.construct_event(payload, sig_header, stripe_webhook_secret)
+            event = stripe.Webhook.construct_event(payload, sig_header, Config.STRIPE_WEBHOOK_SECRET)
         except Exception as e:
             logging.error("Invalid payload or signature")
             return False
@@ -79,7 +81,7 @@ class UserWalletService:
 
             # 触发发货逻辑（示例）
             try:
-                return deposit_complete(db, payment_id, payment_intent_id)
+                return self.user_wallet_history_repository.deposit_complete(payment_id, payment_intent_id)
             except Exception as e:
                 logging.error(f"Failed to fulfill order for payment_id={payment_id}: {str(e)}")
                 return False
@@ -102,27 +104,3 @@ class UserWalletService:
         #         return False
 
         return False
-
-    def deposit_complete(db: Session, id: str, transaction_id: str) -> bool:
-        """
-        标记充值订单为已完成，并安全更新balance_after。
-        :param db: SQLAlchemy Session
-        :param id: user_wallet_history 的主键 id
-        :param transaction_id: 支付平台流水号，可选
-        :return: True=成功，False=未找到或失败
-        """
-
-        obj = db.query(UserWalletHistory).filter(UserWalletHistory.id == id).with_for_update().first()
-        if not obj:
-            logging.error(f"UserWalletHistory not found: id={id}")
-            return False
-        wallet = db.query(UserWallet).filter(UserWallet.user_id == obj.user_id).with_for_update().first()
-        if not wallet:
-            logging.error(f"UserWallet not found: user_id={obj.user_id}")
-            return False
-        wallet.balance = float(wallet.balance) + float(obj.amount)
-        obj.status = 1  # 1=completed
-        obj.balance_after = float(wallet.balance)
-        obj.transaction_id = transaction_id
-        db.commit()
-        return True
