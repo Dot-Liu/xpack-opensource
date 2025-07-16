@@ -42,3 +42,8 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+    def get_user_list(self, offset: int, limit: int) -> tuple[int, list[User]]:
+        total = self.db.query(User).filter(User.is_deleted == 0).count()
+
+        users = self.db.query(User).filter(User.is_deleted == 0).offset(offset).limit(limit).all()
+        return total, users
