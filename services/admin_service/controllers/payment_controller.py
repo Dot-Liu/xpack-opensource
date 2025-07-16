@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+import asyncio
 
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
@@ -37,3 +39,14 @@ def create_payment_link(request: Request, body: CreatePaymentLinkRequest, db: Se
         return ResponseUtils.success({"payment_link": payment_link})
     except Exception as e:
         return ResponseUtils.error(message=str(e), code=500)
+
+
+@router.post("/callback-stripe", response_model=dict)
+async def callback_stripe(request: Request, db: Session = Depends(get_db)):
+    payload = (await request.body()).decode("utf-8")
+    sig_header = request.headers.get("Stripe-Signature") or ""
+    result = payment_service.stripe_payment_callback(db, payload, sig_header)
+    if result:
+        return ResponseUtils.success()
+    else:
+        return ResponseUtils.error(message="Stripe callback failed", code=500)
