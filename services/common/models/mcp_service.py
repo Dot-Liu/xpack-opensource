@@ -35,6 +35,7 @@ class McpService(Base):
         nullable=False,
         comment="Authentication method: free, apikey, token",
     )
+    base_url: Mapped[str] = mapped_column(String(512), nullable=True, comment="api url")
     auth_header: Mapped[str] = mapped_column(String(255), nullable=True, comment="Authentication header name")
     auth_token: Mapped[str] = mapped_column(String(255), nullable=True, comment="Authentication token value")
     charge_type: Mapped[ChargeType] = mapped_column(
