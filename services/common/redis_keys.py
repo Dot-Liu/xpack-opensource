@@ -17,3 +17,16 @@ class RedisKeys:
     @staticmethod
     def email_login_captcha(email: str) -> str:
         return f"xpack:user:login:email:{email}"
+
+    @staticmethod
+    def parse_openapi_key(parse_id: str) -> str:
+        """
+        生成OpenAPI解析结果缓存key
+
+        Args:
+            parse_id: 解析ID
+
+        Returns:
+            str: OpenAPI解析结果缓存key
+        """
+        return f"xpack:openapi:parse:{parse_id}"

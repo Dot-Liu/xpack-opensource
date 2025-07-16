@@ -31,28 +31,28 @@ class ApiEndpoint:
         summary: str = "",
         description: str = "",
         tags: Optional[List[str]] = None,
-        path_params: Optional[List[Dict]] = None,
-        query_params: Optional[List[Dict]] = None,
-        header_params: Optional[List[Dict]] = None,
+        path_parameters: Optional[List[Dict]] = None,
+        query_parameters: Optional[List[Dict]] = None,
+        header_parameters: Optional[List[Dict]] = None,
         request_body_schema: Optional[Dict] = None,
         response_schema: Optional[Dict] = None,
-        response_example: Optional[Dict] = None,
+        response_examples: Optional[Dict] = None,
         response_headers: Optional[List[Dict]] = None,
-        examples: Optional[Dict] = None,
+        operation_examples: Optional[Dict] = None,
     ):
         self.path = path
         self.method = method.upper()
         self.summary = summary
         self.description = description
         self.tags = tags or []
-        self.path_params = path_params or []
-        self.query_params = query_params or []
-        self.header_params = header_params or []
+        self.path_parameters = path_parameters or []
+        self.query_parameters = query_parameters or []
+        self.header_parameters = header_parameters or []
         self.request_body_schema = request_body_schema
         self.response_schema = response_schema
-        self.response_example = response_example
+        self.response_examples = response_examples
         self.response_headers = response_headers or []
-        self.examples = examples or {}
+        self.operation_examples = operation_examples or {}
 
     def to_dict(self):
         result = {
@@ -64,22 +64,22 @@ class ApiEndpoint:
         }
 
         # 只包含非空的参数
-        if self.path_params:
-            result["path_params"] = self.path_params
-        if self.query_params:
-            result["query_params"] = self.query_params
-        if self.header_params:
-            result["header_params"] = self.header_params
+        if self.path_parameters:
+            result["path_parameters"] = self.path_parameters
+        if self.query_parameters:
+            result["query_parameters"] = self.query_parameters
+        if self.header_parameters:
+            result["header_parameters"] = self.header_parameters
         if self.request_body_schema:
             result["request_body_schema"] = self.request_body_schema
         if self.response_schema:
             result["response_schema"] = self.response_schema
-        if self.response_example:
-            result["response_example"] = self.response_example
+        if self.response_examples:
+            result["response_examples"] = self.response_examples
         if self.response_headers:
             result["response_headers"] = self.response_headers
-        if self.examples:
-            result["examples"] = self.examples
+        if self.operation_examples:
+            result["operation_examples"] = self.operation_examples
 
         return result
 
@@ -199,9 +199,9 @@ def convert_openapi_for_ai(openapi_str: str) -> OpenApiForAI:
                     tags = operation.get("tags", [])
 
                     # 分类参数
-                    path_params = []
-                    query_params = []
-                    header_params = []
+                    path_parameters = []
+                    query_parameters = []
+                    header_parameters = []
 
                     # 解析参数并解析其中的 $ref
                     if "parameters" in operation:
@@ -221,15 +221,15 @@ def convert_openapi_for_ai(openapi_str: str) -> OpenApiForAI:
                             }
 
                             if param.get("in") == "path":
-                                path_params.append(param_info)
+                                path_parameters.append(param_info)
                             elif param.get("in") == "query":
-                                query_params.append(param_info)
+                                query_parameters.append(param_info)
                             elif param.get("in") == "header":
-                                header_params.append(param_info)
+                                header_parameters.append(param_info)
 
                     # 提取请求体schema
                     request_body_schema = None
-                    examples = {}
+                    operation_examples = {}
 
                     if "requestBody" in operation:
                         req_body = operation["requestBody"]
@@ -245,7 +245,7 @@ def convert_openapi_for_ai(openapi_str: str) -> OpenApiForAI:
                                 resolved_schema = resolve_schema_refs(json_content["schema"], openapi_data)
                                 request_body_schema = extract_schema_info(resolved_schema)
                             if "example" in json_content:
-                                examples["request_body"] = json_content["example"]
+                                operation_examples["request_body"] = json_content["example"]
                         elif content:
                             # 使用第一个可用的内容类型
                             first_content = next(iter(content.values()))
@@ -253,11 +253,11 @@ def convert_openapi_for_ai(openapi_str: str) -> OpenApiForAI:
                                 resolved_schema = resolve_schema_refs(first_content["schema"], openapi_data)
                                 request_body_schema = extract_schema_info(resolved_schema)
                             if "example" in first_content:
-                                examples["request_body"] = first_content["example"]
+                                operation_examples["request_body"] = first_content["example"]
 
                     # 提取响应参数说明、响应示例和响应头
                     response_schema = None
-                    response_example = None
+                    response_examples = None
                     response_headers = []
 
                     if "responses" in operation:
@@ -280,7 +280,7 @@ def convert_openapi_for_ai(openapi_str: str) -> OpenApiForAI:
                                         resolved_schema = resolve_schema_refs(json_content["schema"], openapi_data)
                                         response_schema = extract_schema_info(resolved_schema)
                                     if "example" in json_content:
-                                        response_example = json_content["example"]
+                                        response_examples = json_content["example"]
 
                         # 提取所有响应的头信息
                         for status_code, response in operation["responses"].items():
@@ -306,14 +306,14 @@ def convert_openapi_for_ai(openapi_str: str) -> OpenApiForAI:
                         summary=summary,
                         description=op_description,
                         tags=tags,
-                        path_params=path_params if path_params else None,
-                        query_params=query_params if query_params else None,
-                        header_params=header_params if header_params else None,
+                        path_parameters=path_parameters if path_parameters else None,
+                        query_parameters=query_parameters if query_parameters else None,
+                        header_parameters=header_parameters if header_parameters else None,
                         request_body_schema=request_body_schema,
                         response_schema=response_schema,
-                        response_example=response_example,
+                        response_examples=response_examples,
                         response_headers=response_headers if response_headers else None,
-                        examples=examples if examples else None,
+                        operation_examples=operation_examples if operation_examples else None,
                     )
 
                     ai_info.add_api(api_endpoint)
