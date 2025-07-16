@@ -38,5 +38,5 @@ class Config:
     pay_success_url = os.getenv("PAY_SUCCESS_URL", "http://localhost:3000/payment/success")
     pay_cancel_url = os.getenv("PAY_CANCEL_URL", "http://localhost:3000/payment/cancel")
     
-    logging.info("redis config loaded: %s:%d, db=%d", REDIS_HOST, REDIS_PORT, REDIS_DB)
-    logging.info("rabbitmq config loaded: %s:%d, vhost=%s", RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_VHOST)
+    print("redis config loaded: %s:%d, db=%d", REDIS_HOST, REDIS_PORT, REDIS_DB)
+    print("rabbitmq config loaded: %s:%d, vhost=%s", RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_VHOST)
