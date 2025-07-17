@@ -30,13 +30,20 @@ def get_user_order_list(
         user = user_service.get_by_id(order.user_id)
         if not user:
             continue
-
+        confirm_at = ""
+        if order.status == 1:
+            confirm_at = order.updated_at
         result.append({
             "id":order.id,
             "user_id":order.user_id,
             "email":user.email,
+            "order_id":order.transaction_id,
+            "payment_type":order.payment_method,
+            "payment_state":order.status,
+
             "amount":order.amount,
-            "update_at":order.updated_at,
+            "create_at":order.created_at,
+            "confirm_at":confirm_at,
         })
 
     return ResponseUtils.success_page(data=result,total=total,page_num=page,page_size=page_size)
