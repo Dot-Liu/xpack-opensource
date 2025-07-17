@@ -22,7 +22,7 @@ class PaymentService:
 
     logging = logging.getLogger(__name__)
 
-    def create_stripe_payment_link(self, user_id: str, amount: float, currency: str = "usd") -> Optional[str]:
+    def create_stripe_payment_link(self, user_id: str, amount: float, currency: str = "usd") -> Optional[dict]:
         # get user information
         user = self.user_repository.get_by_id(user_id)
         if not user:
@@ -56,7 +56,7 @@ class PaymentService:
 
         try:
             session = stripe.checkout.Session.create(**params)
-            return session.url
+            return {"payment_link": session.url, "payment_id": user_wallet_history.id}
         except Exception as e:
             raise RuntimeError(f"Failed to create payment URL: {str(e)}")
 

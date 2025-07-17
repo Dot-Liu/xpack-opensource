@@ -1,0 +1,726 @@
+{
+  "title": "Pet Store API",
+  "version": "1.0.0",
+  "description": "A comprehensive API for managing a pet store, including pet creation, retrieval, updates, and file uploads.",
+  "apis": [
+    {
+      "path": "/pets",
+      "method": "GET",
+      "summary": "List all pets",
+      "description": "Retrieve a paginated list of pets with optional filtering.",
+      "tags": [
+        "Pets"
+      ],
+      "query_parameters": [
+        {
+          "name": "limit",
+          "description": "Maximum number of pets to return",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "format": "int32",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        {
+          "name": "type",
+          "description": "Filter pets by type",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "dog",
+              "cat",
+              "bird"
+            ]
+          }
+        }
+      ],
+      "response_schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "type"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the pet",
+              "example": "123"
+            },
+            "name": {
+              "type": "string",
+              "description": "Name of the pet",
+              "example": "Fluffy"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of the pet",
+              "example": "dog",
+              "enum": [
+                "dog",
+                "cat",
+                "bird"
+              ]
+            },
+            "age": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Age of the pet in years",
+              "example": 3,
+              "minimum": 0
+            },
+            "tags": {
+              "type": "array",
+              "description": "Tags associated with the pet",
+              "example": [
+                "friendly",
+                "playful"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "owner": {
+              "type": "object",
+              "description": "Owner of the pet",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "John Doe"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "example": "john.doe@example.com"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "path": "/pets",
+      "method": "POST",
+      "summary": "Create a new pet",
+      "description": "Create a new pet in the store with JSON data or file upload.",
+      "tags": [
+        "Pets"
+      ],
+      "request_body_schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the pet",
+            "example": "123"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the pet",
+            "example": "Fluffy"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the pet",
+            "example": "dog",
+            "enum": [
+              "dog",
+              "cat",
+              "bird"
+            ]
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Age of the pet in years",
+            "example": 3,
+            "minimum": 0
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags associated with the pet",
+            "example": [
+              "friendly",
+              "playful"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "owner": {
+            "type": "object",
+            "description": "Owner of the pet",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "John Doe"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "john.doe@example.com"
+              }
+            }
+          }
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the pet",
+            "example": "123"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the pet",
+            "example": "Fluffy"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the pet",
+            "example": "dog",
+            "enum": [
+              "dog",
+              "cat",
+              "bird"
+            ]
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Age of the pet in years",
+            "example": 3,
+            "minimum": 0
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags associated with the pet",
+            "example": [
+              "friendly",
+              "playful"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "owner": {
+            "type": "object",
+            "description": "Owner of the pet",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "John Doe"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "john.doe@example.com"
+              }
+            }
+          }
+        }
+      },
+      "response_headers": [
+        {
+          "name": "Location",
+          "description": "URL of the created pet",
+          "schema": {
+            "type": "string",
+            "example": "/pets/123"
+          },
+          "status_code": "201"
+        }
+      ],
+      "operation_examples": {
+        "request_body": {
+          "id": "123",
+          "name": "Fluffy",
+          "type": "dog",
+          "age": 3,
+          "tags": [
+            "friendly",
+            "playful"
+          ]
+        }
+      }
+    },
+    {
+      "path": "/pets/{petId}",
+      "method": "GET",
+      "summary": "Get a pet by ID",
+      "description": "Retrieve details of a specific pet by its ID.",
+      "tags": [
+        "Pets"
+      ],
+      "path_parameters": [
+        {
+          "name": "petId",
+          "description": "ID of the pet to retrieve",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "response_schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the pet",
+            "example": "123"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the pet",
+            "example": "Fluffy"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the pet",
+            "example": "dog",
+            "enum": [
+              "dog",
+              "cat",
+              "bird"
+            ]
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Age of the pet in years",
+            "example": 3,
+            "minimum": 0
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags associated with the pet",
+            "example": [
+              "friendly",
+              "playful"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "owner": {
+            "type": "object",
+            "description": "Owner of the pet",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "John Doe"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "john.doe@example.com"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "path": "/pets/{petId}",
+      "method": "PUT",
+      "summary": "Update a pet",
+      "description": "Update an existing pet's details.",
+      "tags": [
+        "Pets"
+      ],
+      "path_parameters": [
+        {
+          "name": "petId",
+          "description": "ID of the pet to update",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "request_body_schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the pet",
+            "example": "123"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the pet",
+            "example": "Fluffy"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the pet",
+            "example": "dog",
+            "enum": [
+              "dog",
+              "cat",
+              "bird"
+            ]
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Age of the pet in years",
+            "example": 3,
+            "minimum": 0
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags associated with the pet",
+            "example": [
+              "friendly",
+              "playful"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "owner": {
+            "type": "object",
+            "description": "Owner of the pet",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "John Doe"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "john.doe@example.com"
+              }
+            }
+          }
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the pet",
+            "example": "123"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the pet",
+            "example": "Fluffy"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the pet",
+            "example": "dog",
+            "enum": [
+              "dog",
+              "cat",
+              "bird"
+            ]
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Age of the pet in years",
+            "example": 3,
+            "minimum": 0
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags associated with the pet",
+            "example": [
+              "friendly",
+              "playful"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "owner": {
+            "type": "object",
+            "description": "Owner of the pet",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "John Doe"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "john.doe@example.com"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "path": "/pets/{petId}",
+      "method": "DELETE",
+      "summary": "Delete a pet",
+      "description": "Remove a pet from the store.",
+      "tags": [
+        "Pets"
+      ],
+      "path_parameters": [
+        {
+          "name": "petId",
+          "description": "ID of the pet to delete",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    {
+      "path": "/pets/batch",
+      "method": "POST",
+      "summary": "Create multiple pets",
+      "description": "Create multiple pets in a single request.",
+      "tags": [
+        "Batch"
+      ],
+      "request_body_schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "type"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the pet",
+              "example": "123"
+            },
+            "name": {
+              "type": "string",
+              "description": "Name of the pet",
+              "example": "Fluffy"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of the pet",
+              "example": "dog",
+              "enum": [
+                "dog",
+                "cat",
+                "bird"
+              ]
+            },
+            "age": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Age of the pet in years",
+              "example": 3,
+              "minimum": 0
+            },
+            "tags": {
+              "type": "array",
+              "description": "Tags associated with the pet",
+              "example": [
+                "friendly",
+                "playful"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "owner": {
+              "type": "object",
+              "description": "Owner of the pet",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "John Doe"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "example": "john.doe@example.com"
+                }
+              }
+            }
+          }
+        }
+      },
+      "response_schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "type"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the pet",
+              "example": "123"
+            },
+            "name": {
+              "type": "string",
+              "description": "Name of the pet",
+              "example": "Fluffy"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of the pet",
+              "example": "dog",
+              "enum": [
+                "dog",
+                "cat",
+                "bird"
+              ]
+            },
+            "age": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Age of the pet in years",
+              "example": 3,
+              "minimum": 0
+            },
+            "tags": {
+              "type": "array",
+              "description": "Tags associated with the pet",
+              "example": [
+                "friendly",
+                "playful"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "owner": {
+              "type": "object",
+              "description": "Owner of the pet",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "John Doe"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "example": "john.doe@example.com"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "path": "/pets/async",
+      "method": "POST",
+      "summary": "Create a pet asynchronously",
+      "description": "Create a pet asynchronously and return a task ID.",
+      "tags": [
+        "Async"
+      ],
+      "request_body_schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the pet",
+            "example": "123"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the pet",
+            "example": "Fluffy"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the pet",
+            "example": "dog",
+            "enum": [
+              "dog",
+              "cat",
+              "bird"
+            ]
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Age of the pet in years",
+            "example": 3,
+            "minimum": 0
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags associated with the pet",
+            "example": [
+              "friendly",
+              "playful"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "owner": {
+            "type": "object",
+            "description": "Owner of the pet",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "John Doe"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "john.doe@example.com"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

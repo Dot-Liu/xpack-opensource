@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from sqlalchemy.orm import Session
 from services.common.models.user_wallet_history import UserWalletHistory
 from services.common.models.user_wallet import UserWallet
@@ -70,13 +71,29 @@ class UserWalletHistoryRepository:
         obj.transaction_id = transaction_id
         self.db.commit()
         return True
-    def success_order_list(self,offset:int,limit:int) -> tuple[int,list[UserWalletHistory]]:
+
+    def success_order_list(self, offset: int, limit: int) -> tuple[int, list[UserWalletHistory]]:
         """
         订单列表
-        :return: 
+        :return:
         """
         total = self.db.query(UserWalletHistory).filter(UserWalletHistory.status == 1).count()
         if total < offset:
-            return total,[]
-        history = self.db.query(UserWalletHistory).filter(UserWalletHistory.status == 1).order_by(UserWalletHistory.created_at.desc()).offset(offset).limit(limit).all()
-        return total,history
+            return total, []
+        history = (
+            self.db.query(UserWalletHistory)
+            .filter(UserWalletHistory.status == 1)
+            .order_by(UserWalletHistory.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+        return total, history
+
+    def get_by_id(self, history_id: str) -> Optional[UserWalletHistory]:
+        """
+        根据ID获取用户钱包历史记录
+        :param history_id: 历史记录ID
+        :return: UserWalletHistory对象或None
+        """
+        return self.db.query(UserWalletHistory).filter(UserWalletHistory.id == history_id).first()

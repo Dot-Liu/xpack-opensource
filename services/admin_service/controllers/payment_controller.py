@@ -7,12 +7,17 @@ import asyncio
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.payment_service import PaymentService
+from services.admin_service.services.user_wallet_history_service import UserWalletHistoryService
 
 router = APIRouter()
 
 
 def get_payment(db: Session = Depends(get_db)) -> PaymentService:
     return PaymentService(db)
+
+
+def get_user_wallet_history(db: Session = Depends(get_db)) -> UserWalletHistoryService:
+    return UserWalletHistoryService(db)
 
 
 class CreatePaymentLinkRequest(BaseModel):
@@ -39,8 +44,9 @@ def create_payment_link(request: Request, body: CreatePaymentLinkRequest, paymen
         return ResponseUtils.error(message="User not found", code=404)
 
     try:
-        payment_link = payment.create_stripe_payment_link(user_id=user.id, amount=body.amount, currency=body.currency)
-        return ResponseUtils.success({"payment_link": payment_link})
+        payment_info = payment.create_stripe_payment_link(user_id=user.id, amount=body.amount, currency=body.currency)
+        if payment_info:
+            return ResponseUtils.success({"payment_link": payment_info.get("payment_link"), "payment_id": payment_info.get("payment_id")})
     except Exception as e:
         return ResponseUtils.error(message=str(e), code=500)
 
@@ -54,3 +60,13 @@ async def callback_stripe(request: Request, payment: PaymentService = Depends(ge
         return ResponseUtils.success()
     else:
         return ResponseUtils.error(message="Stripe callback failed", code=500)
+
+
+@router.get("/order-status", response_model=dict)
+async def order_status(
+    payment_id: str,
+    get_user_wallet_history: UserWalletHistoryService = Depends(get_user_wallet_history),
+):
+    if get_user_wallet_history.check_order_complete(payment_id):
+        return ResponseUtils.success({"status": 1})
+    return ResponseUtils.success({"status": 0})
