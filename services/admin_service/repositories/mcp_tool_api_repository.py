@@ -22,3 +22,10 @@ class McpToolApiRepository:
         self.db.commit()
         self.db.refresh(mcp_tool_api)
         return mcp_tool_api
+
+    def get_by_service_id(self, service_id: str) -> list[McpToolApi]:
+        """根据服务ID获取API列表"""
+        return self.db.query(McpToolApi).filter(
+            McpToolApi.service_id == service_id,
+            McpToolApi.is_deleted == 0
+        ).all()

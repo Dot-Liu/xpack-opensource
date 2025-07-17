@@ -1,4 +1,5 @@
 import uuid
+import logging
 from fastapi import APIRouter, Depends, Request, Body, UploadFile, File, HTTPException, Form
 from pydantic import BaseModel, HttpUrl
 from typing import Optional
@@ -11,6 +12,8 @@ from services.common.utils.cache_utils import CacheUtils
 from services.common.redis_keys import RedisKeys
 from services.admin_service.utils.user_utils import UserUtils
 from services.common import error_msg
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -85,3 +88,70 @@ async def openapi_parse(
         return ResponseUtils.error(message=f"Request failed: {e.detail}", code=e.status_code)
     except Exception as e:
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
+
+@router.get("/service/info", summary="获取MCP服务信息")
+def get_mcp_service_info(request: Request, id: str, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+    """获取单个MCP服务的详细信息，包括API列表"""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    
+    try:
+        if not id:
+            return ResponseUtils.error(error_msg=error_msg.PARAM_REQUIRED)
+        
+        service_info = mcp_manager_service.get_service_info(id)
+        if not service_info:
+            return ResponseUtils.error(error_msg=error_msg.NOT_FOUND)
+        
+        return ResponseUtils.success(data=service_info)
+    except Exception as e:
+        logger.error(f"Failed to get service info: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
+
+@router.get("/service/list", summary="获取mcp服务列表")
+def get_mcp_service_list(request: Request, page: int = 1, page_size: int = 10, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+    """获取所有MCP服务列表（分页）"""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    
+    try:
+        # 获取分页数据
+        try:
+            services, total = mcp_manager_service.get_all_paginated(page=page, page_size=page_size)
+        except AttributeError:
+            # 如果方法不存在，使用非分页方式
+            all_services = mcp_manager_service.get_all()
+            total = len(all_services)
+            start = (page - 1) * page_size
+            end = start + page_size
+            services = all_services[start:end]
+        service_list = []
+
+        for service in services:
+            service_dict = {
+                "id": service.id,
+                "name": service.name,
+                "slug_name": service.slug_name,
+                "short_description": service.short_description,
+                "long_description": service.long_description,
+                "auth_method": service.auth_method.value if service.auth_method else None,
+                "base_url": service.base_url,
+                "auth_header": service.auth_header,
+                "auth_token": service.auth_token,
+                "charge_type": service.charge_type.value if service.charge_type else None,
+                "price": float(service.price) if service.price else 0.0,
+                "enabled": service.enabled,
+                "created_at": str(service.created_at) if service.created_at else None,
+                "updated_at": str(service.updated_at) if service.updated_at else None,
+            }
+            service_list.append(service_dict)
+
+        return ResponseUtils.success_page(data=service_list, page_num=page, page_size=page_size, total=total)
+    except Exception as e:
+        logger.error(f"Failed to get service list: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
+
+# 查询所有服务列表

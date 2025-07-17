@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from services.common.models.mcp_service import McpService
-from typing import Optional
+from typing import Optional, Tuple
 
 
 class McpServiceRepository:
@@ -53,6 +53,23 @@ class McpServiceRepository:
 
     def get_all(self) -> list[McpService]:
         return self.db.query(McpService).order_by(McpService.created_at.desc()).all()
+
+    def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[list[McpService], int]:
+        """分页获取服务列表"""
+        # 计算偏移量
+        offset = (page - 1) * page_size
+        
+        # 查询总数
+        total = self.db.query(McpService).count()
+        
+        # 分页查询
+        services = self.db.query(McpService)\
+            .order_by(McpService.created_at.desc())\
+            .offset(offset)\
+            .limit(page_size)\
+            .all()
+            
+        return services, total
 
     def create(self, mcp_service: McpService) -> McpService:
         self.db.add(mcp_service)

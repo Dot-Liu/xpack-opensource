@@ -3,7 +3,7 @@ import uuid
 import json
 import re
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Tuple
 from services.admin_service.repositories.mcp_service_repository import McpServiceRepository
 from services.admin_service.repositories.mcp_tool_api_repository import McpToolApiRepository
 from services.common.models.mcp_service import McpService, AuthMethod, ChargeType
@@ -69,8 +69,46 @@ class McpManagerService:
     def get_by_id(self, id: str) -> Optional[McpService]:
         return self.mcp_service_repository.get_by_id(id)
 
+    def get_service_info(self, id: str) -> Optional[dict]:
+        """获取服务详细信息，包括API列表"""
+        service = self.mcp_service_repository.get_by_id(id)
+        if not service:
+            return None
+        
+        # 获取服务的API列表
+        apis = self.mcp_tool_api_repository.get_by_service_id(id)
+        
+        # 构建返回数据
+        service_info = {
+            "id": service.id,
+            "name": service.name,
+            "short_description": service.short_description,
+            "long_description": service.long_description,
+            "base_url": service.base_url,
+            "auth_method": service.auth_method.value if service.auth_method else None,
+            "auth_header": service.auth_header,
+            "auth_token": service.auth_token,
+            "charge_type": service.charge_type.value if service.charge_type else None,
+            "price": str(float(service.price)) if service.price else "0.00",
+            "enabled": service.enabled,
+            "apis": [
+                {
+                    "id": api.id,
+                    "name": api.name,
+                    "description": api.description
+                }
+                for api in apis
+            ]
+        }
+        
+        return service_info
+
     def get_all(self) -> list[McpService]:
         return self.mcp_service_repository.get_all()
+
+    def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[list[McpService], int]:
+        """分页获取服务列表"""
+        return self.mcp_service_repository.get_all_paginated(page=page, page_size=page_size)
 
     def create_service_from_openapi(self, openapi_data: OpenApiForAI) -> str:
         # 将OpenApiForAI信息转成 McpService对象和 McpToolApi对象列表，返回服务ID或者异常。
