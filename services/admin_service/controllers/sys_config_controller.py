@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Body
-from sqlalchemy import table
+from sqlalchemy import false, table
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
@@ -24,7 +24,11 @@ def get_sysconfig(
     admin_username = sysconfig_service.get_value_by_key(sys_config_key.KEY_ADMIN_USERNAME)
     login_google_client = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_CLIENT)
     login_google_secret = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_SECRET)
-    
+    login_google_enable = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_ENABLE)
+    if not login_google_enable:
+        login_google_enable = False
+    else:
+        login_google_enable = bool(login_google_enable)
     return ResponseUtils.success(data={
         "platform": {
             "name": platform_name,
@@ -37,6 +41,7 @@ def get_sysconfig(
             "google":{
                 "client": login_google_client,
                 "secret": login_google_secret,
+                "is_enabled": login_google_enable,
             }
         },
     })
@@ -53,11 +58,16 @@ def set_sysconfig(
         admin_password = body["account"]["password"]
         login_google_client = body["login"]["google"]["client_id"]
         login_google_secret = body["login"]["google"]["client_secret"]
-        print(1,platform_name, platform_logo, admin_username, admin_password, login_google_client, login_google_secret)
+        login_google_enable = body["login"]["google"]["is_enabled"]
+
         # 验证必填字段
         if not all([platform_name, admin_username, admin_password]):
             return ResponseUtils.error("平台名称、管理员账号和密码为必填项")
-
+        if not login_google_enable or login_google_enable == "false":
+            login_google_enable = "False"
+        else:
+            login_google_enable = "True"
+        print("login_google_enable",login_google_enable,type(login_google_enable),str_to_bool(login_google_enable))
         # 批量更新配置 
         configs = [
             (sys_config_key.KEY_PLATFORM_NAME, platform_name, "平台名称"),
@@ -65,7 +75,8 @@ def set_sysconfig(
             (sys_config_key.KEY_ADMIN_USERNAME, admin_username, "管理员账号"),
             (sys_config_key.KEY_ADMIN_PASSWORD, admin_password, "管理员密码"),
             (sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, login_google_client, "谷歌登录客户端ID"),
-            (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "谷歌登录客户端密钥")
+            (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "谷歌登录客户端密钥"),
+            (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "谷歌登录是否启用"),
         ]
 
         for key, value, desc in configs:
@@ -84,6 +95,7 @@ def set_sysconfig(
                 "google":{
                     "client": login_google_client,
                     "secret": login_google_secret,
+                    "is_enabled": str_to_bool(login_google_enable),
                 }
             },
         })
@@ -91,3 +103,5 @@ def set_sysconfig(
     except Exception as e:
         return ResponseUtils.error(f"更新系统配置失败：{str(e)}")
     
+def str_to_bool(s):
+    return s.lower() in ("true", "t", "yes", "y", "1")
