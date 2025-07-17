@@ -26,10 +26,10 @@ async def payment_channel_list(
     for item in list:
         enable = item.status == 1 
         try:
-            cfg = json.loads(item.config)
+            cfg = json.loads(item.config) 
         except:
             cfg = {}
-        result.append({
+        result.append({ 
             "id": item.id,
             "name": item.name,
             "config": cfg,
@@ -40,9 +40,12 @@ async def payment_channel_list(
 
 @router.put("/enable")
 async def payment_channel_enable(
-    id: str,
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
+    body: dict = Body(..., description="支付渠道配置"),
     ):
+    id = body.get("id")
+    if not id:
+        return ResponseUtils.error("支付渠道id不能为空")
     data = payment_channel_service.update_status(id, 1)
     if data:
         return ResponseUtils.success({
@@ -56,9 +59,12 @@ async def payment_channel_enable(
 
 @router.put("/disable")
 async def payment_channel_disable(
-    id: str, 
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
+    body: dict = Body(..., description="支付渠道配置"),
     ):
+    id = body.get("id")
+    if not id:
+        return ResponseUtils.error("支付渠道id不能为空")
     data = payment_channel_service.update_status(id, 0)
     if data:
         return ResponseUtils.success({
@@ -72,10 +78,12 @@ async def payment_channel_disable(
 
 @router.put("/info")
 async def payment_channel_config(
-    id: str, 
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
     body: dict = Body(..., description="支付渠道配置"),
     ):
+    id = body.get("id")
+    if not id:
+        return ResponseUtils.error("支付渠道id不能为空")
     config = body.get("config")
     if config:
         configStr = json.dumps(config)
