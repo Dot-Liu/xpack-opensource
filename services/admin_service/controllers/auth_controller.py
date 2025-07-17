@@ -2,10 +2,8 @@ from fastapi import APIRouter, Depends, Request, Body
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
-from services.common.response.user_response import UserResponse
-from services.common.response.user_wallet_response import UserWalletResponse
-from services.admin_service.services import auth_service
 from services.admin_service.services.auth_service import AuthService
+from services.admin_service.utils.user_utils import UserUtils
 
 router = APIRouter()
 
@@ -49,3 +47,10 @@ def account_login(body: dict = Body(...), auth_service: AuthService = Depends(ge
         return ResponseUtils.success({"user_token": token})
     else:
         return ResponseUtils.error(message="login failed", code=401)
+
+
+@router.delete("/auth/logout", response_model=dict)
+def logout(request: Request, auth_service: AuthService = Depends(get_auth_service)):
+    user_id = UserUtils.get_request_user_id(request)
+    auth_service.logout(user_id)
+    return ResponseUtils.success(message="Logout successful")

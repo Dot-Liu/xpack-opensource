@@ -78,7 +78,7 @@ class AuthService:
             return None
         # 缓存用户访问令牌
         return user_access_token.token
-    
+
     def account_login(self, account: str, password: str) -> Optional[str]:
         user = self.user_repository.get_by_account(account)
         if user and user.password == password:
@@ -86,3 +86,18 @@ class AuthService:
             if token:
                 return token
         return None
+
+    def logout(self, token: str) -> bool:
+        """
+        Logs out the user by deleting their access token.
+        Args:
+            token (str): The user's access token.
+        Returns:
+            bool: True if logout was successful, False otherwise.
+        """
+        try:
+            self.user_access_token_repository.delete_by_token(token)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to logout user with token {token}: {e}")
+            return False

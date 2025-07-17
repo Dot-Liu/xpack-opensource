@@ -17,3 +17,9 @@ class UserAccessTokenRepository:
         self.db.commit()
         self.db.refresh(user_access_token)
         return user_access_token
+
+    def delete_by_token(self, token: str) -> None:
+        user_access_token = self.db.query(UserAccessToken).filter(UserAccessToken.token == token).first()
+        if user_access_token:
+            self.db.delete(user_access_token)
+            self.db.commit()
