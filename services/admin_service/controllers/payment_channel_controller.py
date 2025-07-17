@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, Query, Body
+from pydantic import config
 from sqlalchemy.orm import Session
 
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.payment_channel_service import PaymentChannelService
+import json
 
 router = APIRouter()
 
@@ -23,10 +25,14 @@ async def payment_channel_list(
     result = []
     for item in list:
         enable = item.status == 1 
+        try:
+            cfg = json.loads(item.config)
+        except:
+            cfg = {}
         result.append({
             "id": item.id,
             "name": item.name,
-            "config": item.config,
+            "config": cfg,
             "is_enabled": enable,
             "updated_time": item.update_at,
         })
@@ -72,12 +78,14 @@ async def payment_channel_config(
     ):
     config = body.get("config")
     if config:
-        data = payment_channel_service.update_config(id=id,config=config)
+        configStr = json.dumps(config)
+        data = payment_channel_service.update_config(id=id,config=configStr)
         if data:
+            # str转对象
             return ResponseUtils.success({
                 "id": id,
                 "name": data.name,
-                "config": data.config,
+                "config": config,
                 "is_enabled": data.status == 1,
                 "updated_time": data.update_at,
             })
