@@ -6,7 +6,8 @@ from typing import Optional
 
 class UserResponse(BaseModel):
     user_id: Optional[str] = None
-    name: Optional[str] = None
-    email: Optional[str] = None
+    user_name: Optional[str] = None
+    user_email: Optional[str] = None
+    role_id: Optional[int] = None
     created_at: Optional[datetime.datetime] = None
     wallet: Optional[UserWalletResponse] = None
