@@ -60,14 +60,10 @@ def set_sysconfig(
         login_google_secret = body["login"]["google"]["client_secret"]
         login_google_enable = body["login"]["google"]["is_enabled"]
 
-        # 验证必填字段
-        if not all([platform_name, admin_username, admin_password]):
-            return ResponseUtils.error("平台名称、管理员账号和密码为必填项")
         if not login_google_enable or login_google_enable == "false":
             login_google_enable = "False"
         else:
             login_google_enable = "True"
-        print("login_google_enable",login_google_enable,type(login_google_enable),str_to_bool(login_google_enable))
         # 批量更新配置 
         configs = [
             (sys_config_key.KEY_PLATFORM_NAME, platform_name, "平台名称"),
