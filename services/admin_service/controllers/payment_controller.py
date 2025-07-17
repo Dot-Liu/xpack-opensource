@@ -26,7 +26,7 @@ class CreatePaymentLinkRequest(BaseModel):
     payment_method: str = "stripe"
 
 
-@router.post("/create-payment-link", response_model=dict)
+@router.post("/create_payment_link", response_model=dict)
 def create_payment_link(request: Request, body: CreatePaymentLinkRequest, payment: PaymentService = Depends(get_payment)):
     """
     Create a Stripe payment link for the user.
@@ -46,12 +46,12 @@ def create_payment_link(request: Request, body: CreatePaymentLinkRequest, paymen
     try:
         payment_info = payment.create_stripe_payment_link(user_id=user.id, amount=body.amount, currency=body.currency)
         if payment_info:
-            return ResponseUtils.success({"payment_link": payment_info.get("payment_link"), "payment_id": payment_info.get("payment_id")})
+            return ResponseUtils.success({"pay_url": payment_info.get("payment_link"), "payment_id": payment_info.get("payment_id")})
     except Exception as e:
         return ResponseUtils.error(message=str(e), code=500)
 
 
-@router.post("/callback-stripe", response_model=dict)
+@router.post("/callback_stripe", response_model=dict)
 async def callback_stripe(request: Request, payment: PaymentService = Depends(get_payment)):
     payload = (await request.body()).decode("utf-8")
     sig_header = request.headers.get("Stripe-Signature") or ""
@@ -62,7 +62,7 @@ async def callback_stripe(request: Request, payment: PaymentService = Depends(ge
         return ResponseUtils.error(message="Stripe callback failed", code=500)
 
 
-@router.get("/order-status", response_model=dict)
+@router.get("/order_status", response_model=dict)
 async def order_status(
     payment_id: str,
     get_user_wallet_history: UserWalletHistoryService = Depends(get_user_wallet_history),

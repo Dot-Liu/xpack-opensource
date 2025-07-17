@@ -21,6 +21,7 @@ class User(Base):
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False, comment="Username")
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Email address")
+    password: Mapped[str] = mapped_column(String(255), nullable=True, comment="Password hash")
     avatar: Mapped[str] = mapped_column(String(255), comment="Avatar URL")
     is_active: Mapped[int] = mapped_column(
         Integer,

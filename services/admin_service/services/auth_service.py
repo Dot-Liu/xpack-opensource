@@ -78,3 +78,11 @@ class AuthService:
             return None
         # 缓存用户访问令牌
         return user_access_token.token
+    
+    def account_login(self, account: str, password: str) -> Optional[str]:
+        user = self.user_repository.get_by_account(account)
+        if user and user.password == password:
+            token = self.create_user_token(user.id)
+            if token:
+                return token
+        return None

@@ -22,7 +22,7 @@ def email_login(body: dict = Body(...), auth_service: AuthService = Depends(get_
         return ResponseUtils.error(message="email and captcha required", code=400)
     token = auth_service.email_login(email, captcha)
     if token:
-        return ResponseUtils.success({"token": token})
+        return ResponseUtils.success({"user_token": token})
     else:
         return ResponseUtils.error(message="login failed", code=401)
 
@@ -36,3 +36,16 @@ def email_login_send_captcha(body: dict = Body(...), auth_service: AuthService =
         return ResponseUtils.success()
     else:
         return ResponseUtils.error(message="send email fail")
+
+
+@router.post("/sign", response_model=dict)
+def account_login(body: dict = Body(...), auth_service: AuthService = Depends(get_auth_service)):
+    name = body.get("name")
+    password = body.get("password")
+    if not name or not password:
+        return ResponseUtils.error(message="account and password required", code=400)
+    token = auth_service.email_login(name, password)
+    if token:
+        return ResponseUtils.success({"user_token": token})
+    else:
+        return ResponseUtils.error(message="login failed", code=401)

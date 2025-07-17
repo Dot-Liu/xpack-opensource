@@ -12,6 +12,9 @@ class UserRepository:
 
     def get_by_email(self, email: str) -> Optional[User]:
         return self.db.query(User).filter(User.email == email).first()
+    
+    def get_by_account(self, name: str) -> Optional[User]:
+        return self.db.query(User).filter(User.name == name).first()
 
     def create(self, email: str, register_type: str, role_id: int = 2) -> Optional[User]:
         from uuid import uuid4
