@@ -60,6 +60,7 @@ async def payment_channel_enable(
 @router.put("/disable")
 async def payment_channel_disable(
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
+    body: dict = Body(..., description="支付渠道配置"),
     ):
     id = body.get("id")
     if not id:
