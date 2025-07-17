@@ -31,14 +31,14 @@ class McpToolApi(Base):
         nullable=False,
         comment="HTTP request method",
     )
-    header_parameters: Mapped[str] = mapped_column(String, nullable=True, comment="Header parameter definition (JSON format)")
-    query_parameters: Mapped[str] = mapped_column(String, nullable=True, comment="Query parameter definition (JSON format)")
-    path_parameters: Mapped[str] = mapped_column(String, nullable=True, comment="Path parameter definition (JSON format)")
+    header_parameters: Mapped[str] = mapped_column(String, nullable=True, comment="Header parameter definition")
+    query_parameters: Mapped[str] = mapped_column(String, nullable=True, comment="Query parameter definition")
+    path_parameters: Mapped[str] = mapped_column(String, nullable=True, comment="Path parameter definition")
     request_body_schema: Mapped[str] = mapped_column(String, nullable=True, comment="Request body schema (JSON Schema format)")
     response_schema: Mapped[dict] = mapped_column(String, nullable=True, comment="Response body schema (JSON Schema format)")
-    response_examples: Mapped[str] = mapped_column(String, nullable=True, comment="Response example (JSON format)")
-    response_headers: Mapped[str] = mapped_column(String, nullable=True, comment="Response header definition (JSON format)")
-    operation_examples: Mapped[str] = mapped_column(String, nullable=True, comment="API call example (JSON format)")
+    response_examples: Mapped[str] = mapped_column(String, nullable=True, comment="Response example")
+    response_headers: Mapped[str] = mapped_column(String, nullable=True, comment="Response header definition")
+    operation_examples: Mapped[str] = mapped_column(String, nullable=True, comment="API call example")
     enabled: Mapped[int] = mapped_column(Integer, nullable=False, default=1, comment="API status: 0=disabled, 1=enabled")
     is_deleted: Mapped[int] = mapped_column(Integer, nullable=False, default=0, comment="Soft delete flag: 0=active, 1=deleted")
     created_at: Mapped[DateTime] = mapped_column(

@@ -1,67 +1,87 @@
 import uuid
-from fastapi import APIRouter, Depends, Request, Body, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, Request, Body, UploadFile, File, HTTPException, Form
 from pydantic import BaseModel, HttpUrl
 from typing import Optional
+from sqlalchemy.orm import Session
+from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.openapi_manager import openapi_manager
+from services.admin_service.services.mcp_manager_service import McpManagerService
 from services.common.utils.cache_utils import CacheUtils
 from services.common.redis_keys import RedisKeys
+from services.admin_service.utils.user_utils import UserUtils
+from services.common import error_msg
 
 router = APIRouter()
 
 
-class OpenApiUrlRequest(BaseModel):
-    """通过URL下载OpenAPI文档的请求模型"""
-
-    url: HttpUrl
+class OpenApiRequest(BaseModel):
+    url: Optional[HttpUrl] = None
     description: Optional[str] = None
 
 
-@router.post("/parse-url", response_model=dict)
-async def download_openapi_from_url(request: OpenApiUrlRequest):
+def get_mcp_manager(db: Session = Depends(get_db)) -> McpManagerService:
+    return McpManagerService(db)
+
+
+@router.post("/service/enabled", summary="On/Off MCP service")
+def update_mcp_service_enabled(request: Request, body: dict = Body(...), mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+
+    id = body.get("id")
+    enabled = body.get("enabled")
+    if id is None or enabled is None:
+        return ResponseUtils.error(error_msg=error_msg.PARAM_REQUIRED)
+
+    mcp_manager_service.update_enabled(id=id, enabled=enabled)
+    return ResponseUtils.success()
+
+
+@router.put("/service", summary="Update MCP service information")
+def update_mcp_service_info(request: Request, body: dict = Body(...), mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+
+    mcp_manager_service.update(body)
+    return ResponseUtils.success()
+
+
+@router.delete("/service", summary="Delete MCP service")
+def delete_mcp_service(body: dict = Body(...), mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+    id = body.get("id")
+    if not id:
+        return ResponseUtils.error(error_msg=error_msg.PARAM_REQUIRED)
+
+    mcp_manager_service.delete(id)
+    return ResponseUtils.success()
+
+
+@router.post("/openapi_parse", summary="openapi import", response_model=dict)
+async def openapi_parse(
+    url: Optional[HttpUrl] = Form(None, description="OpenAPI document URL (optional)"),
+    file: Optional[UploadFile] = File(None, description="OpenAPI document file (JSON/YAML, optional)"),
+    mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
+):
     try:
-        # 验证URL是否可访问
-        url_str = str(request.url)
-        is_valid = await openapi_manager.validate_openapi_url(url_str)
-        if not is_valid:
-            return ResponseUtils.error(message="URL无法访问或无效", code=400)
+        if url:
+            url_str = str(url)
+            is_valid = await openapi_manager.validate_openapi_url(url_str)
+            if not is_valid:
+                return ResponseUtils.error(error_msg=error_msg.INVALID_URL)
+            openapi_for_ai = await openapi_manager.download_openapi_from_url(url_str)
+        elif file:
+            openapi_for_ai = await openapi_manager.parse_openapi_from_upload(file)
+        else:
+            return ResponseUtils.error(error_msg=error_msg.MISSING_URL_OR_FILE)
 
-        # 下载并解析OpenAPI文档
-        openapi_for_ai = await openapi_manager.download_openapi_from_url(url_str)
+        # 创建MCP服务
+        service_id = mcp_manager_service.create_service_from_openapi(openapi_for_ai)
 
-        # 返回解析结果
-        parse_id = str(uuid.uuid4())
-        result = {"parse_id": parse_id, "openapi_info": openapi_for_ai.to_dict()}
-
-        # 缓存解析结果
-        cache_key = RedisKeys.parse_openapi_key(parse_id)
-        CacheUtils.set_cache(cache_key, result, 3600)  # 缓存1小时
+        result = {"service_id": service_id}
 
         return ResponseUtils.success(data=result)
-
     except HTTPException as e:
-        return ResponseUtils.error(message=e.detail, code=e.status_code)
+        return ResponseUtils.error(message=f"Request failed: {e.detail}", code=e.status_code)
     except Exception as e:
-        return ResponseUtils.error(message=f"处理请求时发生错误: {str(e)}", code=500)
-
-
-@router.post("/parse-file", response_model=dict)
-async def upload_openapi_file(file: UploadFile = File(..., description="OpenAPI文档文件（支持JSON、YAML格式）")):
-    try:
-        # 解析上传的文件
-        openapi_for_ai = await openapi_manager.parse_openapi_from_upload(file)
-
-        # 返回解析结果
-        parse_id = str(uuid.uuid4())
-        result = {"parse_id": parse_id, "openapi_info": openapi_for_ai.to_dict()}
-        
-        # 缓存解析结果
-        cache_key = RedisKeys.parse_openapi_key(parse_id)
-        CacheUtils.set_cache(cache_key, result, 3600)  # 缓存1小时
-
-        return ResponseUtils.success(data=result, message=f"成功解析OpenAPI文档，包含 {len(openapi_for_ai.apis)} 个API端点")
-
-    except HTTPException as e:
-        return ResponseUtils.error(message=e.detail, code=e.status_code)
-    except Exception as e:
-        return ResponseUtils.error(message=f"处理上传文件时发生错误: {str(e)}", code=500)
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
