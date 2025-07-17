@@ -27,7 +27,7 @@ def email_login(body: dict = Body(...), auth_service: AuthService = Depends(get_
         return ResponseUtils.error(message="login failed", code=401)
 
 
-@router.post("/email/send-captcha", response_model=dict)
+@router.post("/email/send_captcha", response_model=dict)
 def email_login_send_captcha(body: dict = Body(...), auth_service: AuthService = Depends(get_auth_service)):
     email = body.get("email")
     if not email:
@@ -38,7 +38,7 @@ def email_login_send_captcha(body: dict = Body(...), auth_service: AuthService =
         return ResponseUtils.error(message="send email fail")
 
 
-@router.post("/sign", response_model=dict)
+@router.post("/account/sign", response_model=dict)
 def account_login(body: dict = Body(...), auth_service: AuthService = Depends(get_auth_service)):
     name = body.get("name")
     password = body.get("password")
