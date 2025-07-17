@@ -18,7 +18,7 @@ class AuthMiddleware:
             path = scope.get("path", "")
 
             # 跳过健康检查和根路径的认证
-            if path in ["/", "/health", "/docs", "/openapi.json", "/redoc", "/api/auth/email/send-captcha", "/api/auth/email/sign"]:
+            if path in ["/", "/health", "/docs", "/openapi.json", "/redoc", "/api/auth/email/send-captcha", "/api/auth/email/sign", "/api/common/config"]:
                 await self.app(scope, receive, send)
                 return
 

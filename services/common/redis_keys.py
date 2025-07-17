@@ -30,3 +30,16 @@ class RedisKeys:
             str: OpenAPI解析结果缓存key
         """
         return f"xpack:openapi:parse:{parse_id}"
+
+    @staticmethod
+    def sys_config_key(config_key: str) -> str:
+        """
+        生成系统配置缓存key
+
+        Args:
+            config_key: 配置key
+
+        Returns:
+            str: 系统配置缓存key
+        """
+        return f"xpack:sys_config:{config_key}"

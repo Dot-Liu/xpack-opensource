@@ -10,6 +10,7 @@ from services.admin_service.controllers import user_manager
 from services.admin_service.controllers import mcp_manager
 from services.admin_service.controllers import sys_config_controller
 from services.admin_service.controllers import payment_channel_controller
+from services.admin_service.controllers import init_config
 
 from services.admin_service.middleware import AuthMiddleware
 import logging
@@ -36,6 +37,7 @@ app.include_router(mcp_manager.router, prefix="/api/mcp")
 app.include_router(order_controller.router, prefix="/api/order")
 app.include_router(sys_config_controller.router, prefix="/api/sysconfig")
 app.include_router(payment_channel_controller.router, prefix="/api/payment_channel")
+app.include_router(init_config.router, prefix="/api/common")
 
 logging.basicConfig(level=logging.DEBUG)
 
