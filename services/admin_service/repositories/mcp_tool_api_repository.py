@@ -29,3 +29,10 @@ class McpToolApiRepository:
             McpToolApi.service_id == service_id,
             McpToolApi.is_deleted == 0
         ).all()
+
+    def get_by_id(self, api_id: str) -> Optional[McpToolApi]:
+        """根据API ID获取单个API"""
+        return self.db.query(McpToolApi).filter(
+            McpToolApi.id == api_id,
+            McpToolApi.is_deleted == 0
+        ).first()

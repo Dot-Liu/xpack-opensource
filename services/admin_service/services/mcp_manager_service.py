@@ -41,29 +41,88 @@ class McpManagerService:
 
     def update(self, body: dict) -> bool:
         # 更新mcp_service
-        mcp_service = McpService(
-            id=body.get("id"),
-            name=body.get("name"),
-            slug_name=body.get("slug_name"),
-            short_description=body.get("short_description"),
-            long_description=body.get("long_description"),
-            auth_method=body.get("auth_method"),
-            base_url=body.get("base_url"),
-            auth_header=body.get("auth_header"),
-            auth_token=body.get("auth_token"),
-            charge_type=body.get("charge_type"),
-            price=body.get("price"),
-        )
-        self.mcp_service_repository.update(mcp_service)
+        service_id = body.get("id")
+        if not service_id:
+            raise ValueError("Service ID is required")
+        
+        # 获取现有服务
+        existing_service = self.mcp_service_repository.get_by_id(service_id)
+        if not existing_service:
+            raise ValueError("Service not found")
+        
+        # 只更新传入的字段
+        if "name" in body and body["name"] is not None:
+            existing_service.name = body["name"]
+        if "slug_name" in body and body["slug_name"] is not None:
+            existing_service.slug_name = body["slug_name"]
+        if "short_description" in body and body["short_description"] is not None:
+            existing_service.short_description = body["short_description"]
+        if "long_description" in body and body["long_description"] is not None:
+            existing_service.long_description = body["long_description"]
+        if "auth_method" in body and body["auth_method"] is not None:
+            existing_service.auth_method = body["auth_method"]
+        if "base_url" in body and body["base_url"] is not None:
+            existing_service.base_url = body["base_url"]
+        if "auth_header" in body and body["auth_header"] is not None:
+            existing_service.auth_header = body["auth_header"]
+        if "auth_token" in body and body["auth_token"] is not None:
+            existing_service.auth_token = body["auth_token"]
+        if "charge_type" in body and body["charge_type"] is not None:
+            existing_service.charge_type = body["charge_type"]
+        if "price" in body and body["price"] is not None:
+            existing_service.price = body["price"]
+        
+        # 提交更改
+        self.db.commit()
+        self.db.refresh(existing_service)
 
-        # 更新mcp_tool_api列表
-        for tool_api in body.get("apis", []):
-            mcp_tool_api = McpToolApi(
-                id=tool_api.get("id"),
-                name=tool_api.get("name"),
-                description=tool_api.get("description"),
-            )
-            self.mcp_tool_api_repository.update(mcp_tool_api)
+        # 更新mcp_tool_api列表（如果提供）
+        if "apis" in body and body["apis"] is not None:
+            for tool_api_data in body["apis"]:
+                api_id = tool_api_data.get("id")
+                if not api_id:
+                    continue
+                    
+                existing_api = self.mcp_tool_api_repository.get_by_id(api_id)
+                if not existing_api:
+                    continue
+                
+                # 只更新传入的API字段
+                if "name" in tool_api_data and tool_api_data["name"] is not None:
+                    existing_api.name = tool_api_data["name"]
+                if "description" in tool_api_data and tool_api_data["description"] is not None:
+                    existing_api.description = tool_api_data["description"]
+                if "path" in tool_api_data and tool_api_data["path"] is not None:
+                    existing_api.path = tool_api_data["path"]
+                if "method" in tool_api_data and tool_api_data["method"] is not None:
+                    existing_api.method = tool_api_data["method"]
+                if "header_parameters" in tool_api_data and tool_api_data["header_parameters"] is not None:
+                    existing_api.header_parameters = tool_api_data["header_parameters"]
+                if "query_parameters" in tool_api_data and tool_api_data["query_parameters"] is not None:
+                    existing_api.query_parameters = tool_api_data["query_parameters"]
+                if "path_parameters" in tool_api_data and tool_api_data["path_parameters"] is not None:
+                    existing_api.path_parameters = tool_api_data["path_parameters"]
+                if "request_body_schema" in tool_api_data and tool_api_data["request_body_schema"] is not None:
+                    existing_api.request_body_schema = tool_api_data["request_body_schema"]
+                if "response_schema" in tool_api_data and tool_api_data["response_schema"] is not None:
+                    # 如果传入的是字典，转换为JSON字符串
+                    if isinstance(tool_api_data["response_schema"], dict):
+                        existing_api.response_schema = json.dumps(tool_api_data["response_schema"])
+                    else:
+                        existing_api.response_schema = str(tool_api_data["response_schema"])
+                if "response_examples" in tool_api_data and tool_api_data["response_examples"] is not None:
+                    existing_api.response_examples = tool_api_data["response_examples"]
+                if "response_headers" in tool_api_data and tool_api_data["response_headers"] is not None:
+                    existing_api.response_headers = tool_api_data["response_headers"]
+                if "operation_examples" in tool_api_data and tool_api_data["operation_examples"] is not None:
+                    existing_api.operation_examples = tool_api_data["operation_examples"]
+                if "enabled" in tool_api_data and tool_api_data["enabled"] is not None:
+                    existing_api.enabled = tool_api_data["enabled"]
+                
+                # 提交API更改
+                self.db.commit()
+                self.db.refresh(existing_api)
+        
         return True
 
     def get_by_id(self, id: str) -> Optional[McpService]:
@@ -148,7 +207,7 @@ class McpManagerService:
             mcp_service.auth_token = ""
             mcp_service.charge_type = ChargeType.FREE  # 默认免费
             mcp_service.price = 0.0
-            mcp_service.enabled = 1
+            mcp_service.enabled = 0  # 默认不开启，需要用户手动开启
 
             # 保存服务
             self.mcp_service_repository.create(mcp_service)
@@ -166,11 +225,11 @@ class McpManagerService:
                 tool_api.query_parameters = str(api.query_parameters) if api.query_parameters else ""
                 tool_api.path_parameters = str(api.path_parameters) if api.path_parameters else ""
                 tool_api.request_body_schema = str(api.request_body_schema) if api.request_body_schema else ""
-                tool_api.response_schema = api.response_schema or {}
+                tool_api.response_schema = json.dumps(api.response_schema) if api.response_schema else ""
                 tool_api.response_examples = str(api.response_examples) if api.response_examples else ""
                 tool_api.response_headers = str(api.response_headers) if api.response_headers else ""
                 tool_api.operation_examples = str(api.operation_examples) if api.operation_examples else ""
-                tool_api.enabled = 1
+                tool_api.enabled = 0  # 默认不开启，需要用户手动开启
                 tool_api.is_deleted = 0
 
                 # 保存API

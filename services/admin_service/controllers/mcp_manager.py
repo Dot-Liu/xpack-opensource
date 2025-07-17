@@ -27,7 +27,7 @@ def get_mcp_manager(db: Session = Depends(get_db)) -> McpManagerService:
     return McpManagerService(db)
 
 
-@router.post("/service/enabled", summary="On/Off MCP service")
+@router.put("/service/enabled", summary="On/Off MCP service")
 def update_mcp_service_enabled(request: Request, body: dict = Body(...), mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
@@ -46,8 +46,18 @@ def update_mcp_service_info(request: Request, body: dict = Body(...), mcp_manage
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
 
-    mcp_manager_service.update(body)
-    return ResponseUtils.success()
+    # 验证必须传递 ID
+    if not body.get("id"):
+        return ResponseUtils.error(error_msg=error_msg.PARAM_REQUIRED)
+
+    try:
+        mcp_manager_service.update(body)
+        return ResponseUtils.success()
+    except ValueError as e:
+        return ResponseUtils.error(message=str(e))
+    except Exception as e:
+        logger.error(f"Failed to update service: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
 
 
 @router.delete("/service", summary="Delete MCP service")

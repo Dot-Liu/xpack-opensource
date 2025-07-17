@@ -35,7 +35,7 @@ class McpToolApi(Base):
     query_parameters: Mapped[str] = mapped_column(String, nullable=True, comment="Query parameter definition")
     path_parameters: Mapped[str] = mapped_column(String, nullable=True, comment="Path parameter definition")
     request_body_schema: Mapped[str] = mapped_column(String, nullable=True, comment="Request body schema (JSON Schema format)")
-    response_schema: Mapped[dict] = mapped_column(String, nullable=True, comment="Response body schema (JSON Schema format)")
+    response_schema: Mapped[str] = mapped_column(String, nullable=True, comment="Response body schema (JSON Schema format)")
     response_examples: Mapped[str] = mapped_column(String, nullable=True, comment="Response example")
     response_headers: Mapped[str] = mapped_column(String, nullable=True, comment="Response header definition")
     operation_examples: Mapped[str] = mapped_column(String, nullable=True, comment="API call example")
