@@ -43,9 +43,4 @@ class Config:
         "PAY_STRIPE_APIKEY", "sk_test_51QwyFqLRsT5POHCbnAJ7vyA0P8AvAu3rXOcPkCRbIzKziocSg3DALbKO94kaGiXqpMoqrqp1SXJSbOIqRguxMXAu00pfLTg0XN"
     )
 
-    # Google OAuth Configuration
-    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
-    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
-    GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:3000/auth/google/callback")
-
     print(f"redis config loaded, host: {REDIS_HOST}, password: {REDIS_PASSWORD}")

@@ -12,10 +12,16 @@ from services.common.database import SessionLocal
 from services.common.utils.email_utils import EmailUtils
 from services.common.utils.cache_utils import CacheUtils
 from services.common.redis_keys import RedisKeys
-from services.common.config import Config
 
 from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.user_access_token_repository import UserAccessTokenRepository
+from services.admin_service.services.sys_config_service import SysConfigService
+from services.admin_service.constants.sys_config_key import (
+    KEY_LOGIN_GOOGLE_CLIENT,
+    KEY_LOGIN_GOOGLE_SECRET,
+    KEY_LOGIN_GOOGLE_REDIRECT_URI,
+    KEY_LOGIN_GOOGLE_ENABLE,
+)
 
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token
@@ -29,6 +35,7 @@ class AuthService:
     def __init__(self, db: Session = SessionLocal()):
         self.user_repository = UserRepository(db)
         self.user_access_token_repository = UserAccessTokenRepository(db)
+        self.sys_config_service = SysConfigService(db)
 
     def send_email_login_captcha(self, email: str) -> bool:
         """
@@ -117,14 +124,29 @@ class AuthService:
             Optional[str]: User token if login successful, None otherwise
         """
         try:
+            # 检查 Google 登录是否启用
+            google_enable = self.sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_ENABLE)
+            if google_enable != "true":
+                logger.warning("Google login is disabled")
+                return None
+
+            # 从系统配置获取 Google OAuth 配置
+            google_client_id = self.sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_CLIENT)
+            google_client_secret = self.sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_SECRET)
+            google_redirect_uri = self.sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_REDIRECT_URI)
+
+            if not google_client_id or not google_client_secret or not google_redirect_uri:
+                logger.error("Google OAuth configuration is incomplete")
+                return None
+
             # Exchange authorization code for access token
             token_url = "https://oauth2.googleapis.com/token"
             token_data = {
-                "client_id": Config.GOOGLE_CLIENT_ID,
-                "client_secret": Config.GOOGLE_CLIENT_SECRET,
+                "client_id": google_client_id,
+                "client_secret": google_client_secret,
                 "code": code,
                 "grant_type": "authorization_code",
-                "redirect_uri": Config.GOOGLE_REDIRECT_URI,
+                "redirect_uri": google_redirect_uri,
             }
 
             token_response = requests.post(token_url, data=token_data)
@@ -141,7 +163,7 @@ class AuthService:
 
             # Verify and decode the ID token
             try:
-                idinfo = id_token.verify_oauth2_token(id_token_str, GoogleRequest(), Config.GOOGLE_CLIENT_ID)
+                idinfo = id_token.verify_oauth2_token(id_token_str, GoogleRequest(), google_client_id)
             except ValueError as e:
                 logger.error(f"Invalid Google ID token: {e}")
                 return None
