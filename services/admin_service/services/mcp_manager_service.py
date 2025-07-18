@@ -102,7 +102,7 @@ class McpManagerService:
                 new_api.operation_examples = temp_api.operation_examples
                 new_api.enabled = temp_api.enabled
                 new_api.is_deleted = temp_api.is_deleted
-                
+
                 # 保存新的API记录
                 self.mcp_tool_api_repository.create(new_api)
 
@@ -302,14 +302,14 @@ class McpManagerService:
     def update_service_from_openapi(self, service_id: str, openapi_data: OpenApiForAI) -> dict:
         """
         基于OpenAPI数据更新现有服务，将更新后的数据保存到临时表
-        
+
         Args:
             service_id: 要更新的服务ID
             openapi_data: 解析后的OpenAPI数据
-            
+
         Returns:
             dict: 包含完整服务信息和API列表的字典
-            
+
         Raises:
             ValueError: 当服务不存在或更新失败时
         """
@@ -372,11 +372,7 @@ class McpManagerService:
             # 5. 构建返回数据
             apis_list = []
             for temp_api in temp_apis:
-                api_dict = {
-                    "id": temp_api.id,
-                    "name": temp_api.name,
-                    "description": temp_api.description
-                }
+                api_dict = {"id": temp_api.id, "name": temp_api.name, "description": temp_api.description}
                 apis_list.append(api_dict)
 
             result = {
@@ -392,7 +388,7 @@ class McpManagerService:
                 "price": str(float(temp_service.price)) if temp_service.price else "0.00",
                 "enabled": temp_service.enabled,
                 "tags": temp_service.tags,
-                "apis": apis_list
+                "apis": apis_list,
             }
 
             return result
@@ -400,3 +396,68 @@ class McpManagerService:
         except Exception as e:
             logger.error(f"Failed to update service from OpenAPI: {str(e)}")
             raise ValueError(f"Failed to update service from OpenAPI: {str(e)}")
+
+    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[list[dict], int]:
+        """分页获取公开服务列表，返回包含API信息的格式化数据"""
+        services, total = self.mcp_service_repository.get_public_services_paginated(keyword, page, page_size)
+
+        service_list = []
+        for service in services:
+            # 获取服务的API列表
+            apis = self.mcp_tool_api_repository.get_by_service_id(service.id)
+
+            # 构建API信息
+            api_list = []
+            for api in apis:
+                if api.enabled == 1:  # 只返回已启用的API
+                    api_info = {"id": api.id, "name": api.name, "description": api.description}
+                    api_list.append(api_info)
+
+            # 构建服务信息
+            service_info = {
+                "id": service.id,
+                "name": service.name,
+                "short_desciprtion": service.short_description,  # 注意：保持与API规范一致的拼写
+                "slug_name": service.slug_name,
+                "charge_type": service.charge_type.value if service.charge_type else "free",
+                "price": str(float(service.price)) if service.price else "0.00",
+                "apis": api_list,
+            }
+            service_list.append(service_info)
+
+        return service_list, total
+
+    def get_public_service_info(self, id: str) -> Optional[dict]:
+        """获取公开服务的详细信息（只返回已启用的服务和API）"""
+        service = self.mcp_service_repository.get_by_id(id)
+        if not service or service.enabled != 1:
+            return None
+
+        # 获取服务的API列表（只返回已启用的API）
+        all_apis = self.mcp_tool_api_repository.get_by_service_id(id)
+        apis = [api for api in all_apis if api.enabled == 1]
+
+        # 构建API信息（按照API规范格式）
+        api_list = []
+        for api in apis:
+            api_info = {
+                "id": api.id,
+                "name": api.name,
+                "description": api.description
+            }
+            api_list.append(api_info)
+
+        # 构建返回数据（按照API规范格式）
+        service_info = {
+            "id": service.id,
+            "name": service.name,
+            "short_description": service.short_description,
+            "long_description": service.long_description,
+            "slug_name": service.slug_name,
+            "charge_type": service.charge_type.value if service.charge_type else "free",
+            "price": f"{float(service.price):.2f}" if service.price else "0.00",
+            "tags": service.tags or "",
+            "apis": api_list,
+        }
+
+        return service_info

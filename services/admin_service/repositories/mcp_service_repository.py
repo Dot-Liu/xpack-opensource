@@ -58,17 +58,13 @@ class McpServiceRepository:
         """分页获取服务列表"""
         # 计算偏移量
         offset = (page - 1) * page_size
-        
+
         # 查询总数
         total = self.db.query(McpService).count()
-        
+
         # 分页查询
-        services = self.db.query(McpService)\
-            .order_by(McpService.created_at.desc())\
-            .offset(offset)\
-            .limit(page_size)\
-            .all()
-            
+        services = self.db.query(McpService).order_by(McpService.created_at.desc()).offset(offset).limit(page_size).all()
+
         return services, total
 
     def create(self, mcp_service: McpService) -> McpService:
@@ -76,3 +72,24 @@ class McpServiceRepository:
         self.db.commit()
         self.db.refresh(mcp_service)
         return mcp_service
+
+    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[list[McpService], int]:
+        """分页获取公开服务列表，支持关键字搜索"""
+        # 计算偏移量
+        offset = (page - 1) * page_size
+
+        # 构建基础查询：只查询已启用的服务
+        query = self.db.query(McpService).filter(McpService.enabled == 1)
+
+        # 添加关键字搜索条件
+        if keyword:
+            keyword = f"%{keyword}%"
+            query = query.filter((McpService.name.like(keyword)) | (McpService.short_description.like(keyword)))
+
+        # 查询总数
+        total = query.count()
+
+        # 分页查询
+        services = query.order_by(McpService.created_at.desc()).offset(offset).limit(page_size).all()
+
+        return services, total

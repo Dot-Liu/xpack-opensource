@@ -30,6 +30,8 @@ class AuthMiddleware:
                 "/api/auth/email/sign",
                 "/api/auth/account/sign",
                 "/api/auth/email/send_captcha",
+                "/api/web/mcp_services",
+                "/api/web/mcp_service_info",
             ]:
                 await self.app(scope, receive, send)
                 return
