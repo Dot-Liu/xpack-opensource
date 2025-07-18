@@ -49,7 +49,7 @@ class AuthService:
             Optional[str]: The captcha code if email was sent successfully, otherwise None.
         """
         # 快速生成随机四位整数。
-        captcha = str(random.randint(1000, 9999))
+        captcha = str(random.randint(100000, 999999))
 
         # 缓存到 redis
         CacheUtils.set_cache(RedisKeys.email_login_captcha(email), captcha, 10 * 60)
