@@ -18,16 +18,16 @@ def get_mcp_manager(db: Session = Depends(get_db)) -> McpManagerService:
 
 @router.get("/mcp_services", summary="获取公开服务列表")
 def get_public_mcp_services(
-    keyword: str = Query(..., description="查询字段"),
+    keyword: Optional[str] = Query(None, description="查询字段"),
     page: Optional[int] = Query(1, description="分页，从1开始。不传就是默认1。"),
     page_size: Optional[int] = Query(10, description="分页大小，不传默认10。"),
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
 ):
     """获取公开MCP服务列表，支持关键字搜索和分页"""
     try:
-        # 参数验证
-        if not keyword:
-            return ResponseUtils.error(error_msg=error_msg.PARAM_REQUIRED)
+        # 如果没有传keyword，使用空字符串
+        if keyword is None:
+            keyword = ""
 
         # 确保分页参数合法
         if page is None or page < 1:
