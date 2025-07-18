@@ -44,12 +44,12 @@ class McpManagerService:
         service_id = body.get("id")
         if not service_id:
             raise ValueError("Service ID is required")
-        
+
         # 获取现有服务
         existing_service = self.mcp_service_repository.get_by_id(service_id)
         if not existing_service:
             raise ValueError("Service not found")
-        
+
         # 只更新传入的字段
         if "name" in body and body["name"] is not None:
             existing_service.name = body["name"]
@@ -71,7 +71,9 @@ class McpManagerService:
             existing_service.charge_type = body["charge_type"]
         if "price" in body and body["price"] is not None:
             existing_service.price = body["price"]
-        
+        if "tags" in body and body["tags"] is not None:
+            existing_service.tags = body["tags"]
+
         # 提交更改
         self.db.commit()
         self.db.refresh(existing_service)
@@ -82,11 +84,11 @@ class McpManagerService:
                 api_id = tool_api_data.get("id")
                 if not api_id:
                     continue
-                    
+
                 existing_api = self.mcp_tool_api_repository.get_by_id(api_id)
                 if not existing_api:
                     continue
-                
+
                 # 只更新传入的API字段
                 if "name" in tool_api_data and tool_api_data["name"] is not None:
                     existing_api.name = tool_api_data["name"]
@@ -118,11 +120,11 @@ class McpManagerService:
                     existing_api.operation_examples = tool_api_data["operation_examples"]
                 if "enabled" in tool_api_data and tool_api_data["enabled"] is not None:
                     existing_api.enabled = tool_api_data["enabled"]
-                
+
                 # 提交API更改
                 self.db.commit()
                 self.db.refresh(existing_api)
-        
+
         return True
 
     def get_by_id(self, id: str) -> Optional[McpService]:
@@ -133,10 +135,10 @@ class McpManagerService:
         service = self.mcp_service_repository.get_by_id(id)
         if not service:
             return None
-        
+
         # 获取服务的API列表
         apis = self.mcp_tool_api_repository.get_by_service_id(id)
-        
+
         # 构建返回数据
         service_info = {
             "id": service.id,
@@ -150,16 +152,10 @@ class McpManagerService:
             "charge_type": service.charge_type.value if service.charge_type else None,
             "price": str(float(service.price)) if service.price else "0.00",
             "enabled": service.enabled,
-            "apis": [
-                {
-                    "id": api.id,
-                    "name": api.name,
-                    "description": api.description
-                }
-                for api in apis
-            ]
+            "tags": service.tags,
+            "apis": [{"id": api.id, "name": api.name, "description": api.description} for api in apis],
         }
-        
+
         return service_info
 
     def get_all(self) -> list[McpService]:

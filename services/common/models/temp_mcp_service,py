@@ -17,7 +17,7 @@ class ChargeType(PyEnum):
     PER_TOKEN = "per_token"
 
 
-class McpService(Base):
+class TempMcpService(Base):
     __tablename__ = "mcp_service"
 
     id: Mapped[str] = mapped_column(

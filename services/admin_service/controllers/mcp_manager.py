@@ -105,15 +105,15 @@ def get_mcp_service_info(request: Request, id: str, mcp_manager_service: McpMana
     """获取单个MCP服务的详细信息，包括API列表"""
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
-    
+
     try:
         if not id:
             return ResponseUtils.error(error_msg=error_msg.PARAM_REQUIRED)
-        
+
         service_info = mcp_manager_service.get_service_info(id)
         if not service_info:
             return ResponseUtils.error(error_msg=error_msg.NOT_FOUND)
-        
+
         return ResponseUtils.success(data=service_info)
     except Exception as e:
         logger.error(f"Failed to get service info: {str(e)}")
@@ -121,11 +121,13 @@ def get_mcp_service_info(request: Request, id: str, mcp_manager_service: McpMana
 
 
 @router.get("/service/list", summary="获取mcp服务列表")
-def get_mcp_service_list(request: Request, page: int = 1, page_size: int = 10, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+def get_mcp_service_list(
+    request: Request, page: int = 1, page_size: int = 10, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)
+):
     """获取所有MCP服务列表（分页）"""
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
-    
+
     try:
         # 获取分页数据
         try:
@@ -153,6 +155,7 @@ def get_mcp_service_list(request: Request, page: int = 1, page_size: int = 10, m
                 "charge_type": service.charge_type.value if service.charge_type else None,
                 "price": float(service.price) if service.price else 0.0,
                 "enabled": service.enabled,
+                "tags": service.tags,
                 "created_at": str(service.created_at) if service.created_at else None,
                 "updated_at": str(service.updated_at) if service.updated_at else None,
             }
@@ -162,6 +165,5 @@ def get_mcp_service_list(request: Request, page: int = 1, page_size: int = 10, m
     except Exception as e:
         logger.error(f"Failed to get service list: {str(e)}")
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+    
 
-
-# 查询所有服务列表

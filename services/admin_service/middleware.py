@@ -48,11 +48,6 @@ class AuthMiddleware:
                 await self._send_error_response(send, 401, "Authorization header is required")
                 return
 
-            # 验证Bearer token格式
-            if not auth_header.startswith("Bearer "):
-                await self._send_error_response(send, 401, "Invalid authorization header format")
-                return
-
             token = auth_header.replace("Bearer ", "")
 
             # 验证token
