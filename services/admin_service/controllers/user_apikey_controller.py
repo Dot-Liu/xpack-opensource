@@ -26,7 +26,7 @@ def convert_to_apikey_response(user_apikey: UserApiKey) -> ApikeyResponse:
     )
 
 
-@router.post("/", summary="add apikey")
+@router.post("/info", summary="add apikey")
 def add_apikey(request: Request, apikey_service: UserApiKeyService = Depends(get_apikey_service), body: dict = Body(...)):
     user_id = UserUtils.get_request_user_id(request)
     name = body.get("name")
@@ -47,7 +47,7 @@ def get_user_apikey_list(request: Request, apikey_service: UserApiKeyService = D
     return ResponseUtils.success(data=data)
 
 
-@router.delete("/", summary="delete user apikey")
+@router.delete("/info", summary="delete user apikey")
 def delete_apikey(request: Request, apikey_service: UserApiKeyService = Depends(get_apikey_service), body: dict = Body(...)):
     user_id = UserUtils.get_request_user_id(request)
     id = body.get("apikey_id")
@@ -59,7 +59,7 @@ def delete_apikey(request: Request, apikey_service: UserApiKeyService = Depends(
     return ResponseUtils.success(data=convert_to_apikey_response(apikey_obj))
 
 
-@router.put("/", summary="modify user apikey")
+@router.put("/info", summary="modify user apikey")
 def modify_apikey(request: Request, apikey_service: UserApiKeyService = Depends(get_apikey_service), body: dict = Body(...)):
     user_id = UserUtils.get_request_user_id(request)
     id = body.get("apikey_id")
