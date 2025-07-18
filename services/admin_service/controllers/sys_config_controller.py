@@ -59,35 +59,28 @@ def set_sysconfig(
         login_google_client=""
         login_google_secret=""
         login_google_enable=""
+        
 
-        platform = body["platform"]
-        if platform:
-            if platform["name"]:
-                platform_name = platform["name"]
-            if platform["logo"]:
-                platform_logo = platform["logo"]
+        # 使用 get 方法安全地获取嵌套值
+        platform = body.get("platform", {})
+        platform_name = platform.get("name")
+        platform_logo = platform.get("logo")
         
-        account = body["account"]
-        if account:
-            if account["username"]:
-                admin_username = account["username"]
-            if account["password"]:
-                admin_password = account["password"]
+        account = body.get("account", {})
+        admin_username = account.get("username")
+        admin_password = account.get("password")
         
-        login = body["login"]
-        if login:
-            if login["google"]:
-                if login["google"]["client_id"]:
-                    login_google_client = login["google"]["client_id"]
-                if login["google"]["client_secret"]:
-                    login_google_secret = login["google"]["client_secret"]
-                if login["google"]["is_enabled"]:
-                    login_google_enable = login["google"]["is_enabled"]
+        login = body.get("login", {})
+        google_config = login.get("google", {})
+        login_google_client = google_config.get("client_id")
+        login_google_secret = google_config.get("client_secret")
+        login_google_enable = google_config.get("is_enabled", False)  # 设置默认值为 False
 
         if not login_google_enable or login_google_enable == "false":
             login_google_enable = "False"
         else:
             login_google_enable = "True"
+        
         # 批量更新配置 
         configs = [
             (sys_config_key.KEY_PLATFORM_NAME, platform_name, "平台名称"),
@@ -103,22 +96,7 @@ def set_sysconfig(
             if value is not None:  # 只更新有值的配置
                 sysconfig_service.set_value_by_key(key, value, desc)
 
-        return ResponseUtils.success(data={
-            "platform": {
-                "name": platform_name,
-                "logo": platform_logo,
-            },
-            "account":{
-                "username": admin_username,
-            },
-            "login":{
-                "google":{
-                    "client_id": login_google_client,
-                    "client_secret": login_google_secret,
-                    "is_enabled": str_to_bool(login_google_enable),
-                }
-            },
-        })
+        return get_sysconfig(sysconfig_service)
 
     except Exception as e:
         return ResponseUtils.error(f"更新系统配置失败：{str(e)}")
