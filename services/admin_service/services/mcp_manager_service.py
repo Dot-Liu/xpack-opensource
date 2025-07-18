@@ -287,7 +287,7 @@ class McpManagerService:
                 tool_api.response_examples = str(api.response_examples) if api.response_examples else ""
                 tool_api.response_headers = str(api.response_headers) if api.response_headers else ""
                 tool_api.operation_examples = str(api.operation_examples) if api.operation_examples else ""
-                tool_api.enabled = 0  # 默认不开启，需要用户手动开启
+                tool_api.enabled = 1  # 默认开启
                 tool_api.is_deleted = 0
 
                 # 保存API
