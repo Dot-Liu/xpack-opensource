@@ -14,7 +14,7 @@ def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
 
 @router.post("/email/sign", response_model=dict)
 def email_login(body: dict = Body(...), auth_service: AuthService = Depends(get_auth_service)):
-    email = body.get("email")
+    email = body.get("user_email")
     captcha = body.get("captcha")
     if not email or not captcha:
         return ResponseUtils.error(message="email and captcha required", code=400)
@@ -27,7 +27,7 @@ def email_login(body: dict = Body(...), auth_service: AuthService = Depends(get_
 
 @router.post("/email/send_captcha", response_model=dict)
 def email_login_send_captcha(body: dict = Body(...), auth_service: AuthService = Depends(get_auth_service)):
-    email = body.get("email")
+    email = body.get("user_email")
     if not email:
         return ResponseUtils.error(message="email required", code=400)
     if auth_service.send_email_login_captcha(email):
