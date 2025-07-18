@@ -42,7 +42,7 @@ def account_login(body: dict = Body(...), auth_service: AuthService = Depends(ge
     password = body.get("password")
     if not name or not password:
         return ResponseUtils.error(message="account and password required", code=400)
-    token = auth_service.email_login(name, password)
+    token = auth_service.account_login(name, password)
     if token:
         return ResponseUtils.success({"user_token": token})
     else:
