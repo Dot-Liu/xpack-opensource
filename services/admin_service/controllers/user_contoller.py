@@ -14,7 +14,7 @@ def get_user_wallet(db: Session = Depends(get_db)) -> UserWalletService:
     return UserWalletService(db)
 
 
-@router.get("/", response_model=dict)
+@router.get("/info", response_model=dict)
 def get_user(request: Request, db: Session = Depends(get_db), user_wallet: UserWalletService = Depends(get_user_wallet)):
     user_response = UserResponse()
     user_wallet_resp = UserWalletResponse()

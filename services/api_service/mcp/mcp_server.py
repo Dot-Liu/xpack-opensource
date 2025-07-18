@@ -46,4 +46,3 @@ app = Starlette(
     ],
     lifespan=lifespan,
 )
-
