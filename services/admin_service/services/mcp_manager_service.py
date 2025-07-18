@@ -51,11 +51,66 @@ class McpManagerService:
         if not service_id:
             raise ValueError("Service ID is required")
 
+        # 获取更新类型，默认为 default
+        update_type = body.get("update_type", "default")
+
         # 获取现有服务
         existing_service = self.mcp_service_repository.get_by_id(service_id)
         if not existing_service:
             raise ValueError("Service not found")
 
+        # 如果是 openapi 类型的更新，需要先从临时表迁移数据
+        if update_type == "openapi":
+            # 1. 验证临时数据是否存在
+            temp_service = self.temp_mcp_service_repository.get_by_id(service_id)
+            if not temp_service:
+                raise ValueError("No temporary data found for OpenAPI update")
+
+            # 2. 删除现有的API数据
+            self.mcp_tool_api_repository.delete_by_service_id(service_id)
+
+            # 3. 用临时表数据更新服务信息
+            existing_service.name = temp_service.name
+            existing_service.short_description = temp_service.short_description
+            existing_service.long_description = temp_service.long_description
+            existing_service.auth_method = AuthMethod(temp_service.auth_method.value)
+            existing_service.base_url = temp_service.base_url
+            existing_service.auth_header = temp_service.auth_header
+            existing_service.auth_token = temp_service.auth_token
+            existing_service.charge_type = ChargeType(temp_service.charge_type.value)
+            existing_service.price = temp_service.price
+            existing_service.enabled = temp_service.enabled
+            existing_service.tags = temp_service.tags
+
+            # 4. 从临时表迁移API数据到正式表
+            temp_apis = self.temp_mcp_tool_api_repository.get_by_service_id(service_id)
+            for temp_api in temp_apis:
+                new_api = McpToolApi()
+                new_api.id = temp_api.id
+                new_api.service_id = temp_api.service_id
+                new_api.name = temp_api.name
+                new_api.description = temp_api.description
+                new_api.path = temp_api.path
+                new_api.method = HttpMethod(temp_api.method.value)
+                new_api.header_parameters = temp_api.header_parameters
+                new_api.query_parameters = temp_api.query_parameters
+                new_api.path_parameters = temp_api.path_parameters
+                new_api.request_body_schema = temp_api.request_body_schema
+                new_api.response_schema = temp_api.response_schema
+                new_api.response_examples = temp_api.response_examples
+                new_api.response_headers = temp_api.response_headers
+                new_api.operation_examples = temp_api.operation_examples
+                new_api.enabled = temp_api.enabled
+                new_api.is_deleted = temp_api.is_deleted
+                
+                # 保存新的API记录
+                self.mcp_tool_api_repository.create(new_api)
+
+            # 5. 清理临时表数据
+            self.temp_mcp_service_repository.delete_by_service_id(service_id)
+            self.temp_mcp_tool_api_repository.delete_by_service_id(service_id)
+
+        # 执行常规更新逻辑（对于两种类型都适用）
         # 只更新传入的字段
         if "name" in body and body["name"] is not None:
             existing_service.name = body["name"]
@@ -84,8 +139,9 @@ class McpManagerService:
         self.db.commit()
         self.db.refresh(existing_service)
 
-        # 更新mcp_tool_api列表（如果提供）
-        if "apis" in body and body["apis"] is not None:
+        # 更新mcp_tool_api列表（如果提供且不是 openapi 类型更新）
+        # 对于 openapi 类型，API已经在上面从临时表迁移了
+        if update_type != "openapi" and "apis" in body and body["apis"] is not None:
             for tool_api_data in body["apis"]:
                 api_id = tool_api_data.get("id")
                 if not api_id:

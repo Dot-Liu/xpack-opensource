@@ -36,3 +36,8 @@ class McpToolApiRepository:
             McpToolApi.id == api_id,
             McpToolApi.is_deleted == 0
         ).first()
+
+    def delete_by_service_id(self, service_id: str) -> None:
+        """删除指定服务ID的所有API记录"""
+        self.db.query(McpToolApi).filter(McpToolApi.service_id == service_id).delete()
+        self.db.commit()
