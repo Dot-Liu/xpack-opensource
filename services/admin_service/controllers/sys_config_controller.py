@@ -15,7 +15,7 @@ def get_sysconfig_service(db: Session = Depends(get_db)) -> SysConfigService:
     return SysConfigService(db)
 
 
-@router.get("/")
+@router.get("/info")
 def get_sysconfig(
     sysconfig_service: SysConfigService = Depends(get_sysconfig_service)
     ):
@@ -46,7 +46,7 @@ def get_sysconfig(
         },
     })
 
-@router.put("/")
+@router.put("/info")
 def set_sysconfig(
     sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
     body: dict = Body(...),

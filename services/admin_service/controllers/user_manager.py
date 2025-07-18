@@ -18,7 +18,7 @@ def get_user_wallet_service(db: Session = Depends(get_db)) -> UserWalletService:
 def get_user_service(db: Session = Depends(get_db)) -> UserService:
     return UserService(db)
 
-@router.delete("/",summary="delete user")
+@router.delete("/account",summary="delete user")
 async def delete_user(
     id: str, 
     user_service: UserService = Depends(get_user_service),
@@ -39,7 +39,7 @@ async def delete_user(
         return ResponseUtils.error(message="delete user failed, user not found")
     return ResponseUtils.success(data=UserManagerResponse(**user.__dict__))
 
-@router.get("/list",summary="get user list")
+@router.get("/account/list",summary="get user list")
 async def get_user_list(
     page: int = Query(1, description="当前页码"),
     page_size: int = Query(15, description="当前页面数据条数"),
