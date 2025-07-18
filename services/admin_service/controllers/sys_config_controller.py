@@ -39,8 +39,8 @@ def get_sysconfig(
         },
         "login":{
             "google":{
-                "client": login_google_client,
-                "secret": login_google_secret,
+                "client_id": login_google_client,
+                "client_secret": login_google_secret,
                 "is_enabled": login_google_enable,
             }
         },
@@ -52,13 +52,37 @@ def set_sysconfig(
     body: dict = Body(...),
     ):
     try:
-        platform_name = body["platform"]["name"]
-        platform_logo = body["platform"]["logo"]
-        admin_username = body["account"]["username"]
-        admin_password = body["account"]["password"]
-        login_google_client = body["login"]["google"]["client_id"]
-        login_google_secret = body["login"]["google"]["client_secret"]
-        login_google_enable = body["login"]["google"]["is_enabled"]
+        platform_name=""
+        platform_logo=""
+        admin_username=""
+        admin_password=""
+        login_google_client=""
+        login_google_secret=""
+        login_google_enable=""
+
+        platform = body["platform"]
+        if platform:
+            if platform["name"]:
+                platform_name = platform["name"]
+            if platform["logo"]:
+                platform_logo = platform["logo"]
+        
+        account = body["account"]
+        if account:
+            if account["username"]:
+                admin_username = account["username"]
+            if account["password"]:
+                admin_password = account["password"]
+        
+        login = body["login"]
+        if login:
+            if login["google"]:
+                if login["google"]["client_id"]:
+                    login_google_client = login["google"]["client_id"]
+                if login["google"]["client_secret"]:
+                    login_google_secret = login["google"]["client_secret"]
+                if login["google"]["is_enabled"]:
+                    login_google_enable = login["google"]["is_enabled"]
 
         if not login_google_enable or login_google_enable == "false":
             login_google_enable = "False"
@@ -89,8 +113,8 @@ def set_sysconfig(
             },
             "login":{
                 "google":{
-                    "client": login_google_client,
-                    "secret": login_google_secret,
+                    "client_id": login_google_client,
+                    "client_secret": login_google_secret,
                     "is_enabled": str_to_bool(login_google_enable),
                 }
             },
