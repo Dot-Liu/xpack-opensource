@@ -30,6 +30,7 @@ class AuthMiddleware:
                 "/api/auth/email/sign",
                 "/api/auth/account/sign",
                 "/api/auth/email/send_captcha",
+                "/api/auth/google/sign",
                 "/api/web/mcp_services",
                 "/api/web/mcp_service_info",
             ]:
