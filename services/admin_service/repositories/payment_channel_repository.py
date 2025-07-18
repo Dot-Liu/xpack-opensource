@@ -24,5 +24,6 @@ class PaymentChannelRepository:
             payment_channel.config = config
             payment_channel.update_at = datetime.now(timezone.utc)
             self.db.commit()
+            self.db.refresh(payment_channel)
             return payment_channel
         return None

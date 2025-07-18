@@ -80,7 +80,6 @@ def set_sysconfig(
             login_google_enable = "False"
         else:
             login_google_enable = "True"
-        
         # 批量更新配置 
         configs = [
             (sys_config_key.KEY_PLATFORM_NAME, platform_name, "平台名称"),
