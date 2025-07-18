@@ -20,8 +20,8 @@ class SysConfigRepository:
         if sys_config:
             sys_config.value = value
             sys_config.description = description
-            self.db.refresh(sys_config)
             self.db.commit()
+            self.db.refresh(sys_config)
             return sys_config
         sys_config = SysConfig(
             id=str(uuid.uuid4()),
