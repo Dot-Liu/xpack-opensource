@@ -37,6 +37,25 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
+    def create_google_user(self, email: str, name: str, google_id: str, role_id: int = 2) -> Optional[User]:
+        from uuid import uuid4
+        from services.common.models.user import RegisterType
+
+        user = User(
+            id=str(uuid4()),
+            name=name,
+            email=email,
+            avatar=None,
+            is_active=1,
+            is_deleted=0,
+            register_type=RegisterType.GOOGLE,
+            role_id=role_id,
+        )
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
     def delete(self, user_id: str) -> Optional[User]:
         user = self.get_by_id(user_id)
         if not user:

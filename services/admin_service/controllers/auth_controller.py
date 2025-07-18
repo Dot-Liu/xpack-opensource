@@ -49,6 +49,19 @@ def account_login(body: dict = Body(...), auth_service: AuthService = Depends(ge
         return ResponseUtils.error(message="login failed", code=401)
 
 
+@router.post("/google/sign", response_model=dict)
+def google_login(body: dict = Body(...), auth_service: AuthService = Depends(get_auth_service)):
+    code = body.get("code")
+    state = body.get("state")
+    if not code or not state:
+        return ResponseUtils.error(message="code and state required", code=400)
+    token = auth_service.google_login(code, state)
+    if token:
+        return ResponseUtils.success({"user_token": token})
+    else:
+        return ResponseUtils.error(message="login failed", code=401)
+
+
 @router.delete("/auth/logout", response_model=dict)
 def logout(request: Request, auth_service: AuthService = Depends(get_auth_service)):
     user_id = UserUtils.get_request_user_id(request)

@@ -12,9 +12,14 @@ from services.common.database import SessionLocal
 from services.common.utils.email_utils import EmailUtils
 from services.common.utils.cache_utils import CacheUtils
 from services.common.redis_keys import RedisKeys
+from services.common.config import Config
 
 from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.user_access_token_repository import UserAccessTokenRepository
+
+from google.auth.transport.requests import Request as GoogleRequest
+from google.oauth2 import id_token
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -101,3 +106,75 @@ class AuthService:
         except Exception as e:
             logger.error(f"Failed to logout user with token {token}: {e}")
             return False
+
+    def google_login(self, code: str, state: str) -> Optional[str]:
+        """
+        Google OAuth login method.
+        Args:
+            code (str): Google OAuth authorization code
+            state (str): OAuth state parameter for security
+        Returns:
+            Optional[str]: User token if login successful, None otherwise
+        """
+        try:
+            # Exchange authorization code for access token
+            token_url = "https://oauth2.googleapis.com/token"
+            token_data = {
+                "client_id": Config.GOOGLE_CLIENT_ID,
+                "client_secret": Config.GOOGLE_CLIENT_SECRET,
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": Config.GOOGLE_REDIRECT_URI,
+            }
+
+            token_response = requests.post(token_url, data=token_data)
+            if token_response.status_code != 200:
+                logger.error(f"Failed to exchange code for token: {token_response.text}")
+                return None
+
+            token_json = token_response.json()
+            id_token_str = token_json.get("id_token")
+
+            if not id_token_str:
+                logger.error("No id_token in Google OAuth response")
+                return None
+
+            # Verify and decode the ID token
+            try:
+                idinfo = id_token.verify_oauth2_token(id_token_str, GoogleRequest(), Config.GOOGLE_CLIENT_ID)
+            except ValueError as e:
+                logger.error(f"Invalid Google ID token: {e}")
+                return None
+
+            # Extract user information
+            email = idinfo.get("email")
+            name = idinfo.get("name")
+            google_id = idinfo.get("sub")
+
+            if not email:
+                logger.error("No email in Google user info")
+                return None
+
+            # Check if user already exists
+            user = self.user_repository.get_by_email(email)
+
+            # Create user if doesn't exist
+            if user is None:
+                user = self.user_repository.create_google_user(email=email, name=name or email.split("@")[0], google_id=google_id)
+
+            if user is None:
+                logger.error(f"Failed to create/get user with email: {email}")
+                return None
+
+            # Create user token
+            token = self.create_user_token(user.id)
+            if token is None:
+                logger.error(f"Failed to create user token for email: {email}")
+                return None
+
+            logger.info(f"Google login successful for email: {email}")
+            return token
+
+        except Exception as e:
+            logger.error(f"Google login failed: {e}")
+            return None
