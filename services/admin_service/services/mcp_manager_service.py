@@ -6,8 +6,12 @@ from sqlalchemy.orm import Session
 from typing import Optional, Tuple
 from services.admin_service.repositories.mcp_service_repository import McpServiceRepository
 from services.admin_service.repositories.mcp_tool_api_repository import McpToolApiRepository
+from services.admin_service.repositories.temp_mcp_service_repository import TempMcpServiceRepository
+from services.admin_service.repositories.temp_mcp_tool_api_repository import TempMcpToolApiRepository
 from services.common.models.mcp_service import McpService, AuthMethod, ChargeType
 from services.common.models.mcp_tool_api import McpToolApi, HttpMethod
+from services.common.models.temp_mcp_service import TempMcpService, AuthMethod as TempAuthMethod, ChargeType as TempChargeType
+from services.common.models.temp_mcp_tool_api import TempMcpToolApi, HttpMethod as TempHttpMethod
 from services.admin_service.services.openapi_helper import OpenApiForAI
 
 logger = logging.getLogger(__name__)
@@ -32,6 +36,8 @@ class McpManagerService:
         self.db = db
         self.mcp_service_repository = McpServiceRepository(db)
         self.mcp_tool_api_repository = McpToolApiRepository(db)
+        self.temp_mcp_service_repository = TempMcpServiceRepository(db)
+        self.temp_mcp_tool_api_repository = TempMcpToolApiRepository(db)
 
     def update_enabled(self, id: str, enabled: int) -> McpService:
         return self.mcp_service_repository.update_enabled(id, enabled)
@@ -236,3 +242,105 @@ class McpManagerService:
         except Exception as e:
             logger.error(f"Failed to create service from OpenAPI: {str(e)}")
             raise ValueError(f"Failed to create service from OpenAPI: {str(e)}")
+
+    def update_service_from_openapi(self, service_id: str, openapi_data: OpenApiForAI) -> dict:
+        """
+        基于OpenAPI数据更新现有服务，将更新后的数据保存到临时表
+        
+        Args:
+            service_id: 要更新的服务ID
+            openapi_data: 解析后的OpenAPI数据
+            
+        Returns:
+            dict: 包含完整服务信息和API列表的字典
+            
+        Raises:
+            ValueError: 当服务不存在或更新失败时
+        """
+        try:
+            # 1. 检查原服务是否存在
+            existing_service = self.mcp_service_repository.get_by_id(service_id)
+            if not existing_service:
+                raise ValueError(f"Service with ID {service_id} not found")
+
+            # 2. 清理该服务的旧临时数据
+            self.temp_mcp_service_repository.delete_by_service_id(service_id)
+            self.temp_mcp_tool_api_repository.delete_by_service_id(service_id)
+
+            # 3. 创建更新后的临时服务记录
+            temp_service = TempMcpService()
+            temp_service.id = service_id
+            temp_service.name = openapi_data.title or existing_service.name
+            temp_service.slug_name = existing_service.slug_name  # 保持原有slug_name
+            temp_service.short_description = openapi_data.description or existing_service.short_description
+            temp_service.long_description = openapi_data.description or existing_service.long_description
+            temp_service.auth_method = TempAuthMethod(existing_service.auth_method.value)  # 保持原有认证方式
+            temp_service.base_url = existing_service.base_url  # 保持原有base_url
+            temp_service.auth_header = existing_service.auth_header
+            temp_service.auth_token = existing_service.auth_token
+            temp_service.charge_type = TempChargeType(existing_service.charge_type.value)  # 保持原有计费方式
+            temp_service.price = existing_service.price  # 保持原有价格
+            temp_service.enabled = existing_service.enabled  # 保持原有启用状态
+            temp_service.tags = existing_service.tags  # 保持原有标签
+
+            # 保存临时服务记录
+            self.temp_mcp_service_repository.create(temp_service)
+
+            # 4. 创建更新后的临时API记录
+            temp_apis = []
+            for api in openapi_data.apis:
+                temp_api = TempMcpToolApi()
+                temp_api.id = str(uuid.uuid4())
+                temp_api.service_id = service_id
+                temp_api.name = api.summary or api.path
+                temp_api.description = api.description or api.summary or ""
+                temp_api.path = api.path
+                temp_api.method = TempHttpMethod(api.method.upper())
+                temp_api.header_parameters = str(api.header_parameters) if api.header_parameters else ""
+                temp_api.query_parameters = str(api.query_parameters) if api.query_parameters else ""
+                temp_api.path_parameters = str(api.path_parameters) if api.path_parameters else ""
+                temp_api.request_body_schema = str(api.request_body_schema) if api.request_body_schema else ""
+                temp_api.response_schema = str(api.response_schema) if api.response_schema else ""
+                temp_api.response_examples = str(api.response_examples) if api.response_examples else ""
+                temp_api.response_headers = str(api.response_headers) if api.response_headers else ""
+                temp_api.operation_examples = str(api.operation_examples) if api.operation_examples else ""
+                temp_api.enabled = 0  # 默认不启用，需要管理员确认
+                temp_api.is_deleted = 0
+
+                temp_apis.append(temp_api)
+
+            # 批量保存临时API记录
+            if temp_apis:
+                self.temp_mcp_tool_api_repository.create_batch(temp_apis)
+
+            # 5. 构建返回数据
+            apis_list = []
+            for temp_api in temp_apis:
+                api_dict = {
+                    "id": temp_api.id,
+                    "name": temp_api.name,
+                    "description": temp_api.description
+                }
+                apis_list.append(api_dict)
+
+            result = {
+                "id": temp_service.id,
+                "name": temp_service.name,
+                "short_description": temp_service.short_description,
+                "long_description": temp_service.long_description,
+                "base_url": temp_service.base_url,
+                "auth_method": temp_service.auth_method.value if temp_service.auth_method else None,
+                "auth_header": temp_service.auth_header,
+                "auth_token": temp_service.auth_token,
+                "charge_type": temp_service.charge_type.value if temp_service.charge_type else None,
+                "price": str(float(temp_service.price)) if temp_service.price else "0.00",
+                "enabled": temp_service.enabled,
+                "tags": temp_service.tags,
+                "apis": apis_list
+            }
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Failed to update service from OpenAPI: {str(e)}")
+            raise ValueError(f"Failed to update service from OpenAPI: {str(e)}")

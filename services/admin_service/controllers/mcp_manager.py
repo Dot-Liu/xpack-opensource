@@ -100,6 +100,48 @@ async def openapi_parse(
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
 
 
+@router.post("/openapi_parse_update", summary="openapi解析（更新）", response_model=dict)
+async def openapi_parse_update(
+    request: Request,
+    id: str = Form(..., description="服务ID"),
+    url: Optional[HttpUrl] = Form(None, description="OpenAPI document URL (optional)"),
+    file: Optional[UploadFile] = File(None, description="OpenAPI document file (JSON/YAML, optional)"),
+    mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
+):
+    """解析OpenAPI文档并更新现有服务，将数据保存到临时表"""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+
+    try:
+        # 验证必须提供URL或文件
+        if not url and not file:
+            return ResponseUtils.error(error_msg=error_msg.MISSING_URL_OR_FILE)
+
+        # 解析OpenAPI文档
+        if url:
+            url_str = str(url)
+            is_valid = await openapi_manager.validate_openapi_url(url_str)
+            if not is_valid:
+                return ResponseUtils.error(error_msg=error_msg.INVALID_URL)
+            openapi_for_ai = await openapi_manager.download_openapi_from_url(url_str)
+        elif file:  # file is not None here
+            openapi_for_ai = await openapi_manager.parse_openapi_from_upload(file)
+        else:
+            return ResponseUtils.error(error_msg=error_msg.MISSING_URL_OR_FILE)
+
+        # 更新服务并保存到临时表
+        result = mcp_manager_service.update_service_from_openapi(id, openapi_for_ai)
+
+        return ResponseUtils.success(data=result)
+    except ValueError as e:
+        return ResponseUtils.error(message=str(e))
+    except HTTPException as e:
+        return ResponseUtils.error(message=f"Request failed: {e.detail}", code=e.status_code)
+    except Exception as e:
+        logger.error(f"Failed to update service from OpenAPI: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
+
 @router.get("/service/info", summary="获取MCP服务信息")
 def get_mcp_service_info(request: Request, id: str, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
     """获取单个MCP服务的详细信息，包括API列表"""

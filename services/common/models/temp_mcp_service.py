@@ -18,7 +18,7 @@ class ChargeType(PyEnum):
 
 
 class TempMcpService(Base):
-    __tablename__ = "mcp_service"
+    __tablename__ = "temp_mcp_service"
 
     id: Mapped[str] = mapped_column(
         String(36),

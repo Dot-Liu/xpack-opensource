@@ -14,7 +14,7 @@ class HttpMethod(PyEnum):
 
 
 class TempMcpToolApi(Base):
-    __tablename__ = "mcp_tool_api"
+    __tablename__ = "temp_mcp_tool_api"
 
     id: Mapped[str] = mapped_column(
         String(36),
