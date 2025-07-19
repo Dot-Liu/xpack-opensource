@@ -62,7 +62,7 @@ def google_login(body: dict = Body(...), auth_service: AuthService = Depends(get
         return ResponseUtils.error(message="login failed", code=401)
 
 
-@router.delete("/auth/logout", response_model=dict)
+@router.delete("/logout", response_model=dict)
 def logout(request: Request, auth_service: AuthService = Depends(get_auth_service)):
     user_id = UserUtils.get_request_user_id(request)
     auth_service.logout(user_id)

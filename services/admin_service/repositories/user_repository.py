@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 from typing import Optional
 from services.common.models.user import User
 
@@ -12,7 +13,7 @@ class UserRepository:
 
     def get_by_email(self, email: str) -> Optional[User]:
         return self.db.query(User).filter(User.email == email).first()
-    
+
     def get_by_account(self, name: str) -> Optional[User]:
         return self.db.query(User).filter(User.name == name).first()
 
@@ -50,6 +51,7 @@ class UserRepository:
             is_deleted=0,
             register_type=RegisterType.GOOGLE,
             role_id=role_id,
+            created_at=datetime.now(timezone.utc),
         )
         self.db.add(user)
         self.db.commit()
@@ -64,6 +66,7 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+
     def get_user_list(self, offset: int, limit: int) -> tuple[int, list[User]]:
         total = self.db.query(User).filter(User.is_deleted == 0).count()
 

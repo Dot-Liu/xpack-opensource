@@ -417,7 +417,9 @@ class McpManagerService:
             service_info = {
                 "id": service.id,
                 "name": service.name,
-                "short_desciprtion": service.short_description,  # 注意：保持与API规范一致的拼写
+                "short_description": service.short_description,
+                "long_description": service.long_description,
+                "tags": service.tags or "",
                 "slug_name": service.slug_name,
                 "charge_type": service.charge_type.value if service.charge_type else "free",
                 "price": str(float(service.price)) if service.price else "0.00",
@@ -440,11 +442,7 @@ class McpManagerService:
         # 构建API信息（按照API规范格式）
         api_list = []
         for api in apis:
-            api_info = {
-                "id": api.id,
-                "name": api.name,
-                "description": api.description
-            }
+            api_info = {"id": api.id, "name": api.name, "description": api.description}
             api_list.append(api_info)
 
         # 构建返回数据（按照API规范格式）

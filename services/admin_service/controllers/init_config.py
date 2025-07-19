@@ -6,7 +6,12 @@ from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.sys_config_service import SysConfigService
-from services.admin_service.constants.sys_config_key import KEY_PLATFORM_NAME, KEY_PLATFORM_LOGO, KEY_LOGIN_GOOGLE_CLIENT
+from services.admin_service.constants.sys_config_key import (
+    KEY_PLATFORM_NAME,
+    KEY_PLATFORM_LOGO,
+    KEY_LOGIN_GOOGLE_CLIENT,
+    KEY_LOGIN_GOOGLE_ENABLE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +31,13 @@ def get_config(db: Session = Depends(get_db)):
 
         # 获取登录配置
         google_client_id = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_CLIENT) or ""
+        google_is_enabled = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_ENABLE) or "false"
 
         # 构建响应数据
-        config_data = {"login": {"google": {"client_id": google_client_id}}, "platform": {"name": platform_name, "logo": platform_logo}}
+        config_data = {
+            "login": {"google": {"client_id": google_client_id, "is_enabled": google_is_enabled}},
+            "platform": {"name": platform_name, "logo": platform_logo},
+        }
 
         return ResponseUtils.success(data=config_data)
     except Exception as e:
