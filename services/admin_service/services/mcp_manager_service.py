@@ -120,8 +120,13 @@ class McpManagerService:
             existing_service.short_description = body["short_description"]
         if "long_description" in body and body["long_description"] is not None:
             existing_service.long_description = body["long_description"]
-        if "auth_method" in body and body["auth_method"] is not None:
-            existing_service.auth_method = body["auth_method"]
+        if "auth_method" in body:
+            auth_method_value = body["auth_method"]
+            # 如果auth_method是None或者空字符串，就默认是free
+            if auth_method_value is None or auth_method_value == "":
+                existing_service.auth_method = AuthMethod.FREE
+            else:
+                existing_service.auth_method = auth_method_value
         if "base_url" in body and body["base_url"] is not None:
             existing_service.base_url = body["base_url"]
         if "auth_header" in body and body["auth_header"] is not None:
