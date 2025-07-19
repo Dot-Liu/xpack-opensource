@@ -18,6 +18,7 @@ from services.admin_service.controllers import payment_channel_controller
 from services.admin_service.controllers import init_config
 from services.admin_service.controllers import web_controller
 from services.admin_service.controllers import stats_data
+from services.admin_service.controllers import email_test_controller
 from services.admin_service.consumers.billing_message_consumer import BillingMessageConsumer
 from services.admin_service.middleware import AuthMiddleware
 
@@ -93,6 +94,7 @@ app.include_router(payment_channel_controller.router, prefix="/api/payment_chann
 app.include_router(init_config.router, prefix="/api/common")
 app.include_router(web_controller.router, prefix="/api/web")
 app.include_router(stats_data.router, prefix="/api/overview")
+app.include_router(email_test_controller.router, prefix="/api/email_test")
 
 logging.basicConfig(level=logging.DEBUG)
 

@@ -126,3 +126,36 @@ class EmailUtils:
             
         except Exception as e:
             return False, f"邮件配置测试失败: {str(e)}"
+
+    @staticmethod
+    def send_register_code_email(db: Session, email: str, confirm_code: str) -> bool:
+        """
+        发送注册验证码邮件（使用HTML模板）
+        
+        Args:
+            db: 数据库会话
+            email: 收件人邮箱
+            confirm_code: 验证码
+            
+        Returns:
+            bool: 是否发送成功
+        """
+        try:
+            from services.common.utils.email_template_utils import EmailTemplateUtils
+            
+            # 渲染邮件模板
+            html_content = EmailTemplateUtils.render_register_code_email(db, confirm_code)
+            if not html_content:
+                logging.error("渲染邮件模板失败")
+                return False
+            
+            # 获取平台配置用于邮件主题
+            platform_config = EmailTemplateUtils.get_platform_config(db)
+            subject = f"👋Your verification code for {platform_config['platform_name']}"
+            
+            # 发送HTML邮件
+            return EmailUtils.send_email(db, subject, html_content, email, is_html=True)
+            
+        except Exception as e:
+            logging.error(f"发送注册验证码邮件失败: {str(e)}")
+            return False

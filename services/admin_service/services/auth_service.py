@@ -41,22 +41,21 @@ class AuthService:
     def send_email_login_captcha(self, email: str) -> bool:
         """
         Sends a login captcha code to the specified email address.
-        The function generates a random 4-digit captcha code, stores it in Redis cache for 10 minutes,
-        and sends the code to the user's email. Returns the captcha code if the email was sent successfully,
-        otherwise returns None.
+        The function generates a random 6-digit captcha code, stores it in Redis cache for 10 minutes,
+        and sends the code to the user's email using HTML template.
         Args:
             email (str): The recipient's email address.
         Returns:
-            Optional[str]: The captcha code if email was sent successfully, otherwise None.
+            bool: True if email was sent successfully, otherwise False.
         """
-        # 快速生成随机四位整数。
+        # 生成随机6位验证码
         captcha = str(random.randint(100000, 999999))
 
         # 缓存到 redis
         CacheUtils.set_cache(RedisKeys.email_login_captcha(email), captcha, 10 * 60)
 
-        # 使用动态邮件配置发送邮件
-        return EmailUtils.send_email(self.db, "XPack code", f"code: {captcha}", email, False)
+        # 使用HTML邮件模板发送验证码
+        return EmailUtils.send_register_code_email(self.db, email, captcha)
 
     def email_login(self, email: str, captcha: str) -> Optional[str]:
         cache_value = CacheUtils.get_cache(RedisKeys.email_login_captcha(email))
