@@ -60,7 +60,7 @@ def read_root():
         "message": f"XPack MCP Streamable HTTP Service running on port {Config.API_PORT}",
         "version": "1.0.0",
         "protocol": "MCP Streamable HTTP",
-        "endpoints": ["/mcp/sse/{service_id}", "/mcp/messages/", "/mcp/status/{service_id}"],
+        "endpoints": ["/mcp/{service_id}", "/mcp/messages/", "/mcp/status/{service_id}"],
         "service_id_support": "Supports both service ID and slug_name",
         "reconnect_info": "Service supports automatic reconnection after restart"
     }
@@ -121,7 +121,7 @@ def mcp_service_status(service_id: str):
         "service_name": service_name,
         "status": "available",
         "protocol": "streamable-http",
-        "endpoint": f"/mcp/sse/{service_id}",
+        "endpoint": f"/mcp/{service_id}",
         "message": "Service is ready for connections",
         "active_connections": len(service_connections),
         "reconnect_supported": True
@@ -143,7 +143,7 @@ def mcp_connections_stats():
 # 创建MCP Streamable HTTP路由
 # 使用Starlette子应用处理MCP协议的底层SSE连接
 mcp_routes = [
-    Route("/sse/{service_id}", endpoint=mcp_controller.handle_sse_connection, methods=["GET"]),
+    Route("/{service_id}", endpoint=mcp_controller.handle_sse_connection, methods=["GET"]),
     Mount("/messages/", app=mcp_controller.get_sse_mount_handler()),
 ]
 
