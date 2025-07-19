@@ -33,6 +33,7 @@ class AuthMiddleware:
                 "/api/auth/google/sign",
                 "/api/web/mcp_services",
                 "/api/web/mcp_service_info",
+                "/api/payment/callback_stripe",
             ]:
                 await self.app(scope, receive, send)
                 return
