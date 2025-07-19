@@ -3,6 +3,7 @@ from sqlalchemy import false, table
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
+from services.common.utils.email_utils import EmailUtils
 from services.admin_service.services.sys_config_service import SysConfigService
 from services.admin_service.services.user_service import UserService
 from services.admin_service.constants import sys_config_key
@@ -149,6 +150,45 @@ def set_sysconfig(
 
     except Exception as e:
         return ResponseUtils.error(f"更新系统配置失败：{str(e)}")
+
+
+@router.post("/test_email")
+def test_email_config(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+):
+    """
+    测试邮件配置是否有效
+    :param body: 包含测试邮箱地址的请求体 {"email": "test@example.com"}
+    :param db: 数据库会话
+    :return: 测试结果
+    """
+    try:
+        test_email = body.get("email")
+        if not test_email:
+            return ResponseUtils.error("请提供测试邮箱地址")
+        
+        # 测试连接配置
+        success, message = EmailUtils.test_email_config(db)
+        if not success:
+            return ResponseUtils.error(message)
+        
+        # 发送测试邮件
+        test_success = EmailUtils.send_email(
+            db,
+            "XPack 邮件配置测试",
+            "这是一封测试邮件，用于验证邮件配置是否正确。如果您收到这封邮件，说明配置成功！",
+            test_email,
+            False
+        )
+        
+        if test_success:
+            return ResponseUtils.success(data={"message": "测试邮件发送成功，请检查收件箱"})
+        else:
+            return ResponseUtils.error("测试邮件发送失败")
+            
+    except Exception as e:
+        return ResponseUtils.error(f"测试邮件配置失败：{str(e)}")
 
 
 def str_to_bool(s):

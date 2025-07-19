@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 class AuthService:
 
     def __init__(self, db: Session = SessionLocal()):
+        self.db = db  # 保存数据库会话供发送邮件使用
         self.user_repository = UserRepository(db)
         self.user_access_token_repository = UserAccessTokenRepository(db)
         self.sys_config_service = SysConfigService(db)
@@ -54,8 +55,8 @@ class AuthService:
         # 缓存到 redis
         CacheUtils.set_cache(RedisKeys.email_login_captcha(email), captcha, 10 * 60)
 
-        # 发送邮件
-        return EmailUtils.send_email("XPack code", f"code: {captcha}", email, False)
+        # 使用动态邮件配置发送邮件
+        return EmailUtils.send_email(self.db, "XPack code", f"code: {captcha}", email, False)
 
     def email_login(self, email: str, captcha: str) -> Optional[str]:
         cache_value = CacheUtils.get_cache(RedisKeys.email_login_captcha(email))

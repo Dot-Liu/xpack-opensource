@@ -2,50 +2,127 @@ import smtplib
 import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from typing import Optional
+from sqlalchemy.orm import Session
+from services.admin_service.services.sys_config_service import SysConfigService
+from services.admin_service.constants import sys_config_key
 from services.common.config import Config
 
 
 class EmailUtils:
+    """
+    邮件工具类 - 从系统配置中读取邮件设置
+    优先使用系统配置，如果没有配置则回退到环境变量配置
+    """
+
+    @staticmethod
+    def get_email_config(db: Session) -> dict:
+        """
+        从系统配置中获取邮件配置
+        :param db: 数据库会话
+        :return: 邮件配置字典
+        """
+        sysconfig_service = SysConfigService(db)
+        
+        smtp_host = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_HOST)
+        smtp_port = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PORT)
+        smtp_user = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_USER)
+        smtp_password = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PASSWORD)
+        smtp_sender = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_SENDER)
+        
+        # 如果系统配置中有SMTP配置，则使用系统配置
+        if smtp_host and smtp_port and smtp_user and smtp_password:
+            return {
+                'host': smtp_host,
+                'port': int(smtp_port),
+                'user': smtp_user,
+                'password': smtp_password,
+                'sender': smtp_sender or smtp_user,  # 如果没有指定发送者，使用用户名
+            }
+        
+        # 否则回退到环境变量配置
+        logging.warning("系统配置中未找到完整的邮件配置，使用环境变量配置")
+        return {
+            'host': Config.SMTP_HOST,
+            'port': Config.SMTP_PORT,
+            'user': Config.SMTP_USER,
+            'password': Config.SMTP_PASSWORD,
+            'sender': Config.SMTP_SENDER,
+        }
 
     @staticmethod
     def send_email(
+        db: Session,
         subject: str,
         body: str,
         to: str,
         is_html: bool = False,
     ) -> bool:
         """
-        Send email using SMTP config from Config
-        :param subject: Email subject
-        :param body: Email body
-        :param to: Recipient email
-        :param is_html: Is HTML content
-        :return: None
+        发送邮件，使用动态配置
+        :param db: 数据库会话
+        :param subject: 邮件主题
+        :param body: 邮件正文
+        :param to: 收件人邮箱
+        :param is_html: 是否为HTML内容
+        :return: 是否发送成功
         """
-        sender = Config.SMTP_USER
-        msg = MIMEMultipart()
-        msg["From"] = sender
-        msg["To"] = to
-        msg["Subject"] = subject
-
-        logging.info(f"Sending email via SMTP host: {Config.SMTP_HOST}")
-
-        if is_html:
-            msg.attach(MIMEText(body, "html", "utf-8"))
-        else:
-            msg.attach(MIMEText(body, "plain", "utf-8"))
-
         try:
-            if Config.SMTP_PORT == 465:
-                server = smtplib.SMTP_SSL(Config.SMTP_HOST, Config.SMTP_PORT)
+            # 获取邮件配置
+            email_config = EmailUtils.get_email_config(db)
+            
+            sender = email_config['sender']
+            msg = MIMEMultipart()
+            msg["From"] = sender
+            msg["To"] = to
+            msg["Subject"] = subject
+
+            logging.info(f"使用动态配置发送邮件 SMTP host: {email_config['host']}")
+
+            if is_html:
+                msg.attach(MIMEText(body, "html", "utf-8"))
             else:
-                server = smtplib.SMTP(Config.SMTP_HOST, Config.SMTP_PORT)
+                msg.attach(MIMEText(body, "plain", "utf-8"))
+
+            # 根据端口选择连接方式
+            if email_config['port'] == 465:
+                server = smtplib.SMTP_SSL(email_config['host'], email_config['port'])
+            else:
+                server = smtplib.SMTP(email_config['host'], email_config['port'])
                 server.starttls()
-            server.login(Config.SMTP_USER, Config.SMTP_PASSWORD)
+            
+            server.login(email_config['user'], email_config['password'])
             server.sendmail(sender, [to], msg.as_string())
             server.quit()
-            logging.info(f"Email sent successfully to {to}")
+            
+            logging.info(f"邮件发送成功到 {to}")
             return True
+            
         except Exception as e:
-            logging.error(f"Failed to send email: {e}")
+            logging.error(f"发送邮件失败: {e}")
             return False
+
+    @staticmethod
+    def test_email_config(db: Session) -> tuple[bool, str]:
+        """
+        测试邮件配置是否有效
+        :param db: 数据库会话
+        :return: (是否成功, 错误信息)
+        """
+        try:
+            email_config = EmailUtils.get_email_config(db)
+            
+            # 尝试连接SMTP服务器
+            if email_config['port'] == 465:
+                server = smtplib.SMTP_SSL(email_config['host'], email_config['port'])
+            else:
+                server = smtplib.SMTP(email_config['host'], email_config['port'])
+                server.starttls()
+            
+            server.login(email_config['user'], email_config['password'])
+            server.quit()
+            
+            return True, "邮件配置测试成功"
+            
+        except Exception as e:
+            return False, f"邮件配置测试失败: {str(e)}"
