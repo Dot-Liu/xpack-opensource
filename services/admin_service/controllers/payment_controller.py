@@ -7,6 +7,7 @@ import logging
 
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
+from services.common.utils.request_utils import RequestUtils
 from services.admin_service.services.payment_service import PaymentService
 from services.admin_service.services.user_wallet_history_service import UserWalletHistoryService
 
@@ -45,7 +46,7 @@ def create_payment_link(request: Request, body: CreatePaymentLinkRequest, paymen
         return ResponseUtils.error(message="User not found", code=404)
 
     try:
-        base_url = f"{request.url.scheme}://{request.url.netloc}"  # http://domain.com 或 https://domain.com
+        base_url = RequestUtils.get_real_base_url(request)
         logging.debug(f"base_url: {base_url}")
         payment_info = payment.create_stripe_payment_link(base_url, user_id=user.id, amount=body.amount, currency=body.currency)
         if payment_info:

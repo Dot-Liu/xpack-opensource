@@ -13,6 +13,8 @@ class Config:
     API_PORT = int(os.getenv("API_PORT", 8002))
     ADMIN_PORT = int(os.getenv("ADMIN_PORT", 8001))
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    # 基础URL，用于处理反向代理情况
+    BASE_URL = os.getenv("BASE_URL", "")  # 例如: https://api.yourdomain.com
     DEBUG = os.getenv("DEBUG", "true").lower() == "true"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
