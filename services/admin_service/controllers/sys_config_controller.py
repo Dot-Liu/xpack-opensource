@@ -20,7 +20,8 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 
 @router.get("/info")
 def get_sysconfig(
-    sysconfig_service: SysConfigService = Depends(get_sysconfig_service), user_service: UserService = Depends(get_user_service)
+    sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
+    user_service: UserService = Depends(get_user_service),
 ):
     admin_user = user_service.get_admin_user()
 
@@ -106,7 +107,7 @@ def set_sysconfig(
             if value is not None:  # 只更新有值的配置
                 sysconfig_service.set_value_by_key(key, value, desc)
 
-        return get_sysconfig(sysconfig_service)
+        return get_sysconfig(sysconfig_service, user_service)
 
     except Exception as e:
         return ResponseUtils.error(f"更新系统配置失败：{str(e)}")
