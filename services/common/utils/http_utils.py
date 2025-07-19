@@ -1,14 +1,18 @@
 import aiohttp
 import asyncio
-import logging
 from typing import Optional, Dict, Any
-from fastapi import HTTPException
+from services.common.exceptions import (
+    ValidationException, 
+    InternalServerException,
+    ServiceUnavailableException
+)
+from services.common.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class HttpUtils:
-    """HTTP请求工具类，提供通用的HTTP请求功能"""
+    """HTTP utility class providing common HTTP request functionality"""
 
     @staticmethod
     async def download_content_from_url(
@@ -19,20 +23,22 @@ class HttpUtils:
         headers: Optional[Dict[str, str]] = None
     ) -> str:
         """
-        从URL下载内容
+        Download content from URL
 
         Args:
-            url: 要下载的URL地址
-            timeout: 请求超时时间（秒）
-            max_file_size: 最大文件大小（字节）
-            allowed_content_types: 允许的内容类型列表
-            headers: 额外的请求头
+            url: The URL to download from
+            timeout: Request timeout in seconds
+            max_file_size: Maximum file size in bytes
+            allowed_content_types: List of allowed content types
+            headers: Additional request headers
 
         Returns:
-            str: 下载的内容
+            str: Downloaded content
 
         Raises:
-            HTTPException: 当下载失败时
+            ValidationException: When URL is invalid or parameters are wrong
+            ServiceUnavailableException: When network issues occur
+            InternalServerException: When unexpected errors occur
         """
         if allowed_content_types is None:
             allowed_content_types = [
@@ -45,9 +51,9 @@ class HttpUtils:
             ]
 
         try:
-            logger.info(f"开始从URL下载内容: {url}")
+            logger.info(f"Starting to download content from URL: {url}")
 
-            # 设置请求头
+            # Set request headers
             request_headers = {
                 "User-Agent": "XPack-OpenAPI-Downloader/1.0"
             }
@@ -59,50 +65,47 @@ class HttpUtils:
                 headers=request_headers
             ) as session:
                 async with session.get(url) as response:
-                    # 检查响应状态
+                    # Check response status
                     if response.status != 200:
-                        raise HTTPException(
-                            status_code=400,
-                            detail=f"无法下载内容，HTTP状态码: {response.status}"
+                        raise ServiceUnavailableException(
+                            f"Unable to download content, HTTP status code: {response.status}"
                         )
 
-                    # 检查内容类型
+                    # Check content type
                     content_type = response.headers.get('content-type', '').lower()
                     if not any(ct in content_type for ct in allowed_content_types):
-                        logger.warning(f"内容类型可能不正确: {content_type}")
+                        logger.warning(f"Content type might be incorrect: {content_type}")
 
-                    # 检查文件大小
+                    # Check file size
                     content_length = response.headers.get('content-length')
                     if content_length and int(content_length) > max_file_size:
-                        raise HTTPException(
-                            status_code=413,
-                            detail=f"文件过大，最大允许 {max_file_size} 字节"
+                        raise ValidationException(
+                            f"File too large, maximum allowed: {max_file_size} bytes"
                         )
 
-                    # 读取内容
+                    # Read content
                     content = await response.text()
 
-                    # 检查实际内容大小
+                    # Check actual content size
                     if len(content.encode('utf-8')) > max_file_size:
-                        raise HTTPException(
-                            status_code=413,
-                            detail=f"文件过大，最大允许 {max_file_size} 字节"
+                        raise ValidationException(
+                            f"File too large, maximum allowed: {max_file_size} bytes"
                         )
 
-                    logger.info(f"成功下载内容，大小: {len(content)} 字符")
+                    logger.info(f"Successfully downloaded content, size: {len(content)} characters")
                     return content
 
         except aiohttp.ClientError as e:
-            logger.error(f"网络请求失败: {e}")
-            raise HTTPException(status_code=400, detail=f"网络请求失败: {str(e)}")
+            logger.error(f"Network request failed: {e}")
+            raise ServiceUnavailableException(f"Network request failed: {str(e)}")
         except asyncio.TimeoutError:
-            logger.error(f"请求超时: {url}")
-            raise HTTPException(status_code=408, detail="请求超时")
-        except HTTPException:
+            logger.error(f"Request timeout: {url}")
+            raise ServiceUnavailableException("Request timeout")
+        except (ValidationException, ServiceUnavailableException):
             raise
         except Exception as e:
-            logger.error(f"下载内容时发生错误: {e}")
-            raise HTTPException(status_code=500, detail=f"下载失败: {str(e)}")
+            logger.error(f"Error occurred while downloading content: {e}")
+            raise InternalServerException(f"Download failed: {str(e)}")
 
     @staticmethod
     async def validate_url_accessibility(url: str, timeout: int = 10) -> bool:
@@ -171,19 +174,21 @@ class HttpUtils:
         headers: Optional[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         """
-        发送JSON POST请求
+        Send JSON POST request
 
         Args:
-            url: 请求URL
-            data: 要发送的数据
-            timeout: 超时时间（秒）
-            headers: 额外的请求头
+            url: Request URL
+            data: Data to send
+            timeout: Timeout in seconds
+            headers: Additional request headers
 
         Returns:
-            Dict[str, Any]: 响应数据
+            Dict[str, Any]: Response data
 
         Raises:
-            HTTPException: 当请求失败时
+            ValidationException: When parameters are invalid
+            ServiceUnavailableException: When network issues occur
+            InternalServerException: When unexpected errors occur
         """
         try:
             request_headers = {
@@ -199,21 +204,20 @@ class HttpUtils:
             ) as session:
                 async with session.post(url, json=data) as response:
                     if response.status >= 400:
-                        raise HTTPException(
-                            status_code=response.status,
-                            detail=f"HTTP请求失败，状态码: {response.status}"
+                        raise ServiceUnavailableException(
+                            f"HTTP request failed with status code: {response.status}"
                         )
 
                     return await response.json()
 
         except aiohttp.ClientError as e:
-            logger.error(f"POST请求失败: {e}")
-            raise HTTPException(status_code=400, detail=f"请求失败: {str(e)}")
+            logger.error(f"POST request failed: {e}")
+            raise ServiceUnavailableException(f"Request failed: {str(e)}")
         except asyncio.TimeoutError:
-            logger.error(f"POST请求超时: {url}")
-            raise HTTPException(status_code=408, detail="请求超时")
-        except HTTPException:
+            logger.error(f"POST request timeout: {url}")
+            raise ServiceUnavailableException("Request timeout")
+        except (ValidationException, ServiceUnavailableException):
             raise
         except Exception as e:
-            logger.error(f"POST请求时发生错误: {e}")
-            raise HTTPException(status_code=500, detail=f"请求失败: {str(e)}")
+            logger.error(f"Error occurred during POST request: {e}")
+            raise InternalServerException(f"Request failed: {str(e)}")

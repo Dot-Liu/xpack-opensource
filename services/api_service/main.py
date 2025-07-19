@@ -5,6 +5,9 @@ API Service - FastAPI应用主入口
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.responses import JSONResponse
 from starlette.routing import Route, Mount
 from starlette.applications import Starlette
 from contextlib import asynccontextmanager
@@ -15,6 +18,9 @@ from services.common.config import Config
 from services.common.logging_config import setup_logging, get_logger
 from services.api_service.controllers.mcp import McpController
 from services.api_service.utils.connection_manager import connection_manager
+from services.common.middleware.exception_middleware import ExceptionHandlingMiddleware
+from services.common.utils.response_utils import ResponseUtils
+from services.common import error_msg
 
 # Setup logging for api service
 setup_logging("api_service")
@@ -39,6 +45,58 @@ app = FastAPI(
     openapi_url="/openapi.json",
     lifespan=lifespan
 )
+
+# Add custom exception handlers for unified response format
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request, exc):
+    """Handle HTTP exceptions with unified response format"""
+    logger.warning(
+        f"HTTP exception occurred: {exc.detail} - Path: {request.url.path} - Code: {exc.status_code}"
+    )
+    
+    # Use predefined error messages based on status code
+    if exc.status_code == 404:
+        message = error_msg.ENDPOINT_NOT_FOUND["message"]
+    elif exc.status_code == 400:
+        message = error_msg.INVALID_REQUEST["message"]
+    elif exc.status_code == 401:
+        message = error_msg.UNAUTHORIZED["message"]
+    elif exc.status_code == 403:
+        message = error_msg.FORBIDDEN["message"]
+    elif exc.status_code == 409:
+        message = error_msg.CONFLICT["message"]
+    elif exc.status_code == 422:
+        message = error_msg.VALIDATION_FAILED["message"]
+    elif exc.status_code == 500:
+        message = error_msg.INTERNAL_ERROR["message"]
+    elif exc.status_code == 503:
+        message = error_msg.SERVICE_UNAVAILABLE["message"]
+    else:
+        message = exc.detail
+    
+    error_response = ResponseUtils.error(message=message, code=exc.status_code)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=error_response,
+        headers={"Content-Type": "application/json; charset=utf-8"}
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    """Handle request validation errors with unified response format"""
+    logger.warning(f"Validation error occurred: {str(exc)} - Path: {request.url.path}")
+    error_response = ResponseUtils.error(
+        message=error_msg.VALIDATION_FAILED["message"], 
+        code=422
+    )
+    return JSONResponse(
+        status_code=422,
+        content=error_response,
+        headers={"Content-Type": "application/json; charset=utf-8"}
+    )
+
+# Add global exception handling middleware (must be first for proper error handling)
+app.add_middleware(ExceptionHandlingMiddleware)
 
 # 添加CORS中间件 - MCP客户端需要跨域支持和重连机制
 app.add_middleware(

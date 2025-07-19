@@ -1,11 +1,31 @@
 # Common error messages for global use
+# All error messages use English for consistency and internationalization
 
-INVALID_URL = {"code": 400, "message": "The provided URL is not accessible or invalid. Please check the URL and try again."}
-MISSING_URL_OR_FILE = {"code": 400, "message": "Please provide either a valid URL or a file to parse the OpenAPI document."}
-CREATE_FAILED = {"code": 500, "message": "Failed to create resource. Please try again later."}
-NOT_FOUND = {"code": 404, "message": "The requested resource was not found."}
-NO_PERMISSION = {"code": 403, "message": "You do not have permission to perform this action."}
-DELETE_FAILED = {"code": 403, "message": "Delete failed, resource not found or no permission."}
-MODIFY_FAILED = {"code": 403, "message": "Modify failed, resource not found or no permission."}
-PARAM_REQUIRED = {"code": 400, "message": "Required parameter is missing."}
-INTERNAL_ERROR = {"code": 500, "message": "An unexpected error occurred while processing your request. Please try again later."}
+# 4xx Client Errors
+INVALID_REQUEST = {"code": 400, "message": "Invalid request parameters"}
+MISSING_PARAMETER = {"code": 400, "message": "Required parameter is missing"}
+INVALID_URL = {"code": 400, "message": "Invalid URL provided"}
+INVALID_FORMAT = {"code": 400, "message": "Invalid data format"}
+
+UNAUTHORIZED = {"code": 401, "message": "Authentication required"}
+INVALID_TOKEN = {"code": 401, "message": "Invalid or expired token"}
+
+FORBIDDEN = {"code": 403, "message": "Access forbidden"}
+INSUFFICIENT_PERMISSION = {"code": 403, "message": "Insufficient permission"}
+
+NOT_FOUND = {"code": 404, "message": "Resource not found"}
+ENDPOINT_NOT_FOUND = {"code": 404, "message": "Endpoint not found"}
+
+CONFLICT = {"code": 409, "message": "Resource conflict"}
+DUPLICATE_RESOURCE = {"code": 409, "message": "Resource already exists"}
+
+VALIDATION_FAILED = {"code": 422, "message": "Validation failed"}
+BUSINESS_ERROR = {"code": 422, "message": "Business logic error"}
+
+# 5xx Server Errors  
+INTERNAL_ERROR = {"code": 500, "message": "Internal server error"}
+DATABASE_ERROR = {"code": 500, "message": "Database operation failed"}
+EXTERNAL_SERVICE_ERROR = {"code": 500, "message": "External service error"}
+
+SERVICE_UNAVAILABLE = {"code": 503, "message": "Service temporarily unavailable"}
+TIMEOUT_ERROR = {"code": 504, "message": "Request timeout"}

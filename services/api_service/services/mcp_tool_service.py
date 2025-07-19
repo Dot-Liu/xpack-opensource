@@ -6,7 +6,7 @@ from typing import List, Dict, Any
 import mcp.types as types
 from mcp.shared._httpx_utils import create_mcp_http_client
 from services.api_service.utils.http_client import HttpRequestBuilder
-from services.api_service.utils.logging_config import get_logger
+from services.common.logging_config import get_logger
 
 logger = get_logger(__name__)
 

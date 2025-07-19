@@ -3,7 +3,7 @@ HTTP客户端工具 - 负责构建和处理HTTP请求
 """
 import json
 from typing import Dict, Any, Optional
-from services.api_service.utils.logging_config import get_logger
+from services.common.logging_config import get_logger
 
 logger = get_logger(__name__)
 

@@ -24,7 +24,7 @@ class McpController:
         self.sse = SseServerTransport("/messages/")
         self.server_factory = McpServerFactory()
 
-    async def handle_sse_connection(self, request: Request) -> Response:
+    async def handle_sse_connection(self, request: Request):
         """Handle MCP Streamable HTTP SSE connection with resume capability."""
         # 获取连接标识信息
         client_ip = request.client.host if request.client else "unknown"
@@ -35,16 +35,19 @@ class McpController:
             # 从URL路径中提取service_id (支持ID和slug_name两种模式)
             service_id = self._extract_service_id(request)
             if not service_id:
-                logger.error("缺少service_id参数或未找到对应服务")
-                return Response("Missing service_id parameter or service not found", status_code=400)
+                logger.error("Missing service_id parameter or service not found")
+                # 对于SSE连接错误，我们需要通过ASGI接口直接发送响应
+                await self._send_error_response(request, 400, "Missing service_id parameter or service not found")
+                return
 
-            logger.info(f"收到SSE连接请求 - 服务ID: {service_id}, 客户端: {client_ip}, UA: {user_agent[:50]}...")
+            logger.info(f"Received SSE connection request - Service ID: {service_id}, Client: {client_ip}, UA: {user_agent[:50]}...")
 
             # 提取用户ID（用于计费）- 必须提供有效的 apikey
             user_id = self._extract_user_id(request)
             if not user_id:
-                logger.error("缺少有效的 apikey，拒绝连接")
-                return Response("Missing or invalid apikey parameter", status_code=401)
+                logger.error("Missing or invalid apikey, connection rejected")
+                await self._send_error_response(request, 401, "Missing or invalid apikey parameter")
+                return
 
             # 创建MCP服务器实例（传入用户ID用于计费）
             mcp_server = await self.server_factory.create_server(service_id, user_id)
@@ -54,31 +57,50 @@ class McpController:
 
             # 建立SSE连接并运行MCP服务器
             async with self.sse.connect_sse(request.scope, request.receive, request._send) as streams:
-                logger.info(f"SSE连接已建立 - 服务ID: {service_id}, 用户ID: {user_id}, 客户端: {client_ip}")
+                logger.info(f"SSE connection established - Service ID: {service_id}, User ID: {user_id}, Client: {client_ip}")
 
                 # 配置服务器初始化选项
                 init_options = mcp_server.create_initialization_options()
                 init_options.server_name = f"mcp-service-{service_id}"
                 
                 # 增加连接恢复提示信息
-                logger.info(f"服务器名称设置为: {init_options.server_name}")
-                logger.info(f"MCP服务器启动完成，等待客户端消息... (连接标识: {connection_key})")
+                logger.info(f"Server name set to: {init_options.server_name}")
+                logger.info(f"MCP server startup complete, waiting for client messages... (Connection ID: {connection_key})")
 
-                # 运行MCP服务器
-                await mcp_server.run(streams[0], streams[1], init_options)
-                logger.info(f"MCP服务器运行结束 - 服务ID: {service_id}, 用户ID: {user_id}")
+                try:
+                    # 运行MCP服务器
+                    await mcp_server.run(streams[0], streams[1], init_options)
+                    logger.info(f"MCP server run completed - Service ID: {service_id}, User ID: {user_id}")
+                except Exception as e:
+                    logger.error(f"Error occurred during MCP server operation: {str(e)}", exc_info=True)
+                finally:
+                    # 注销连接
+                    connection_manager.unregister_connection(connection_key)
 
-            # 注销连接
-            connection_manager.unregister_connection(connection_key)
-
-            return Response()
+            # SSE连接已通过context manager正常结束，无需额外处理
 
         except ConnectionError as e:
-            logger.warning(f"连接错误 - 服务ID: {service_id or 'unknown'}, 客户端: {client_ip}: {str(e)}")
-            return Response("Connection error", status_code=503)
+            logger.warning(f"Connection error - Service ID: {service_id or 'unknown'}, Client: {client_ip}: {str(e)}")
+            await self._send_error_response(request, 503, "Connection error")
         except Exception as e:
-            logger.error(f"SSE连接处理失败 - 服务ID: {service_id or 'unknown'}, 客户端: {client_ip}: {str(e)}", exc_info=True)
-            return Response(f"Internal server error: {str(e)}", status_code=500)
+            logger.error(f"SSE connection handling failed - Service ID: {service_id or 'unknown'}, Client: {client_ip}: {str(e)}", exc_info=True)
+            await self._send_error_response(request, 500, f"Internal server error: {str(e)}")
+
+    async def _send_error_response(self, request: Request, status_code: int, message: str):
+        """Send error response directly through ASGI interface"""
+        response_body = message.encode('utf-8')
+        await request._send({
+            'type': 'http.response.start',
+            'status': status_code,
+            'headers': [
+                [b'content-type', b'text/plain'],
+                [b'content-length', str(len(response_body)).encode()],
+            ],
+        })
+        await request._send({
+            'type': 'http.response.body',
+            'body': response_body,
+        })
 
     def _extract_service_id(self, request: Request) -> Optional[str]:
         """Extract service ID from request path, supporting both ID and slug_name."""
@@ -98,20 +120,20 @@ class McpController:
             # 首先尝试按ID查找
             service = service_repository.get_by_id(service_identifier)
             if service:
-                logger.debug(f"找到服务 (按ID): {service.name} ({service.id})")
+                logger.debug(f"Service found (by ID): {service.name} ({service.id})")
                 return service.id
             
             # 如果按ID未找到，尝试按slug_name查找
             service = service_repository.get_by_slug_name(service_identifier)
             if service:
-                logger.debug(f"找到服务 (按slug_name): {service.name} ({service.id})")
+                logger.debug(f"Service found (by slug_name): {service.name} ({service.id})")
                 return service.id
                 
-            logger.warning(f"未找到服务: {service_identifier}")
+            logger.warning(f"Service not found: {service_identifier}")
             return None
             
         except Exception as e:
-            logger.error(f"查询服务时发生错误: {str(e)}", exc_info=True)
+            logger.error(f"Error occurred while querying service: {str(e)}", exc_info=True)
             return None
         finally:
             if db is not None:
@@ -122,10 +144,10 @@ class McpController:
         # 从URL查询参数中获取apikey
         apikey = request.query_params.get("apikey")
         if not apikey:
-            logger.warning("未在URL参数中找到apikey")
+            logger.warning("Apikey not found in URL parameters")
             return None
 
-        logger.debug(f"正在验证apikey: {apikey[:10]}...")  # 只记录前10个字符用于调试
+        logger.debug(f"Validating apikey: {apikey[:10]}...")  # Only log first 10 characters for debugging
 
         db = None
         try:
@@ -136,10 +158,10 @@ class McpController:
             # 通过apikey查询用户信息
             user_apikey = user_apikey_repo.get_by_apikey(apikey)
             if not user_apikey:
-                logger.warning(f"数据库中未找到apikey: {apikey[:10]}...")
+                logger.warning(f"Apikey not found in database: {apikey[:10]}...")
                 return None
             
-            logger.debug(f"找到apikey记录 - 用户ID: {user_apikey.user_id}, 过期时间: {user_apikey.expire_at}")
+            logger.debug(f"Found apikey record - User ID: {user_apikey.user_id}, expiry time: {user_apikey.expire_at}")
             
             # 检查apikey是否过期
             if user_apikey.expire_at:
@@ -150,14 +172,14 @@ class McpController:
                     expire_at_utc = user_apikey.expire_at
                     
                 if expire_at_utc < datetime.now(timezone.utc):
-                    logger.warning(f"apikey已过期: {apikey[:10]}..., 过期时间: {user_apikey.expire_at}")
+                    logger.warning(f"Apikey has expired: {apikey[:10]}..., expiry time: {user_apikey.expire_at}")
                     return None
             
-            logger.info(f"apikey验证成功 - 用户ID: {user_apikey.user_id}")
+            logger.info(f"Apikey validation successful - User ID: {user_apikey.user_id}")
             return user_apikey.user_id
             
         except Exception as e:
-            logger.error(f"查询用户apikey时发生错误: {str(e)}", exc_info=True)
+            logger.error(f"Error occurred while querying user apikey: {str(e)}", exc_info=True)
             return None
         finally:
             if db is not None:

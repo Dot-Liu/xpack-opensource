@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query
 from typing import Optional
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -9,6 +9,10 @@ from services.common.database import get_db
 from services.common.models.user import User
 from services.common.response.user_manager_response import UserManagerResponse
 from services.common.utils.response_utils import ResponseUtils
+from services.common.utils.validation_utils import ValidationUtils
+from services.common.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -21,31 +25,50 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
     return UserService(db)
 
 
-@router.delete("/account", summary="delete user")
+@router.delete("/account", summary="Delete user account")
 async def delete_user(
     id: str,
     user_service: UserService = Depends(get_user_service),
 ):
     """Delete user by ID."""
-
+    
+    # Validate user ID parameter
+    ValidationUtils.require_non_empty_string(id, "id")
+    
+    logger.info(f"Deleting user with ID: {id}")
+    
+    # Delete user - let any exception bubble up to middleware
     user = user_service.delete(id)
-    if not user:
-        return ResponseUtils.error(message="delete user failed, user not found")
-    return ResponseUtils.success(data=UserManagerResponse(**user.__dict__))
+    
+    # Validate that user was found and deleted
+    ValidationUtils.require_resource_exists(user, "user")
+    
+    logger.info(f"Successfully deleted user: {id}")
+    return ResponseUtils.success(
+        data=UserManagerResponse(**user.__dict__),
+        message="User deleted successfully"
+    )
 
 
-@router.get("/account/list", summary="get user list")
+@router.get("/account/list", summary="Get user list with pagination")
 async def get_user_list(
-    page: int = Query(1, description="当前页码"),
-    page_size: int = Query(15, description="当前页面数据条数"),
+    page: int = Query(1, description="Page number (starts from 1)"),
+    page_size: int = Query(15, description="Number of items per page"),
     user_service: UserService = Depends(get_user_service),
     user_wallet_service: UserWalletService = Depends(get_user_wallet_service),
 ):
     """Get paginated list of users with wallet information."""
-    # 计算偏移量
-    skip = (page - 1) * page_size
+    
+    # Validate pagination parameters
+    validated_page, validated_page_size = ValidationUtils.validate_pagination(page, page_size)
+    
+    logger.info(f"Fetching user list - page: {validated_page}, size: {validated_page_size}")
+    
+    # Calculate offset
+    skip = (validated_page - 1) * validated_page_size
 
-    total, users = user_service.get_user_list(skip, page_size)
+    # Get user list - let any exception bubble up to middleware
+    total, users = user_service.get_user_list(skip, validated_page_size)
 
     # 转换用户数据为列表
     user_list = []

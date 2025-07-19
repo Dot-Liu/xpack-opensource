@@ -4,7 +4,7 @@
 import time
 from typing import Dict, Optional
 from dataclasses import dataclass
-from services.api_service.utils.logging_config import get_logger
+from services.common.logging_config import get_logger
 
 logger = get_logger(__name__)
 
