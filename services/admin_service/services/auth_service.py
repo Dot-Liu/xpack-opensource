@@ -114,7 +114,7 @@ class AuthService:
             logger.error(f"Failed to logout user with token {token}: {e}")
             return False
 
-    def google_login(self, code: str, state: str) -> Optional[str]:
+    def google_login(self, base_url: str, code: str, state: str) -> Optional[str]:
         """
         Google OAuth login method.
         Args:
@@ -133,7 +133,7 @@ class AuthService:
             # 从系统配置获取 Google OAuth 配置
             google_client_id = self.sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_CLIENT)
             google_client_secret = self.sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_SECRET)
-            google_redirect_uri = self.sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_REDIRECT_URI)
+            google_redirect_uri = base_url + "loginSuccess"
 
             if not google_client_id or not google_client_secret or not google_redirect_uri:
                 logger.error("Google OAuth configuration is incomplete")
