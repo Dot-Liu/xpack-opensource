@@ -9,6 +9,9 @@ from services.admin_service.services.sys_config_service import SysConfigService
 from services.admin_service.constants.sys_config_key import (
     KEY_PLATFORM_NAME,
     KEY_PLATFORM_LOGO,
+    KEY_WEBSITE_TITLE,
+    KEY_HEADLINE,
+    KEY_SUBHEADLINE,
     KEY_LOGIN_GOOGLE_CLIENT,
     KEY_LOGIN_GOOGLE_ENABLE,
 )
@@ -28,6 +31,9 @@ def get_config(db: Session = Depends(get_db)):
         # 获取平台配置
         platform_name = sys_config_service.get_value_by_key(KEY_PLATFORM_NAME) or "XPack"
         platform_logo = sys_config_service.get_value_by_key(KEY_PLATFORM_LOGO) or ""
+        website_title = sys_config_service.get_value_by_key(KEY_WEBSITE_TITLE) or ""
+        headline = sys_config_service.get_value_by_key(KEY_HEADLINE) or ""
+        subheadline = sys_config_service.get_value_by_key(KEY_SUBHEADLINE) or ""
 
         # 获取登录配置
         google_client_id = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_CLIENT) or ""
@@ -36,7 +42,13 @@ def get_config(db: Session = Depends(get_db)):
         # 构建响应数据
         config_data = {
             "login": {"google": {"client_id": google_client_id, "is_enabled": google_is_enabled}},
-            "platform": {"name": platform_name, "logo": platform_logo},
+            "platform": {
+                "name": platform_name, 
+                "logo": platform_logo,
+                "website_title": website_title,
+                "headline": headline,
+                "subheadline": subheadline,
+            },
         }
 
         return ResponseUtils.success(data=config_data)
