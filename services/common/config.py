@@ -1,6 +1,5 @@
 import os
 import logging
-import stripe
 from dotenv import load_dotenv
 
 logging = logging.getLogger(__name__)
@@ -34,13 +33,6 @@ class Config:
     RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
     RABBITMQ_VHOST = os.getenv("RABBITMQ_VHOST", "/")
 
-    PAY_SUCCESS_URL = os.getenv("PAY_SUCCESS_URL", "http://localhost:3000/payment/success")
-    PAY_CANCEL_URL = os.getenv("PAY_CANCEL_URL", "http://localhost:3000/payment/cancel")
-
-    STRIPE_WEBHOOK_SECRET = os.getenv("PAY_STRIPE_WEBHOOK_SECRET", "whsec_P0ZDR8Bzwen3YnzGUzfW29mnPJSypnGa")
-
-    stripe.api_key = os.getenv(
-        "PAY_STRIPE_APIKEY", "sk_test_51QwyFqLRsT5POHCbnAJ7vyA0P8AvAu3rXOcPkCRbIzKziocSg3DALbKO94kaGiXqpMoqrqp1SXJSbOIqRguxMXAu00pfLTg0XN"
-    )
+    PAY_SUCCESS_URL = os.getenv("PAY_SUCCESS_URL", "http://localhost:3000/payment/pay_success")
 
     print(f"redis config loaded, host: {REDIS_HOST}, password: {REDIS_PASSWORD}")

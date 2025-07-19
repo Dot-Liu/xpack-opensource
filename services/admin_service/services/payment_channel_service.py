@@ -1,20 +1,68 @@
+import json
 import logging
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Dict, Any
 from services.common.database import SessionLocal
 from datetime import datetime
 from services.admin_service.repositories.payment_channel_repository import PaymentChannelRepository
 from services.common.models.payment_channel import PaymentChannel
 
+logger = logging.getLogger(__name__)
+
 class PaymentChannelService:
     def __init__(self, db: Session = SessionLocal()):
         self.db = db
         self.payment_channel_repository = PaymentChannelRepository(db)
+    
     def list(self) -> tuple[int,list[PaymentChannel]]:
         return self.payment_channel_repository.payment_channel_list()
+    
     def get(self, id: str) -> Optional[PaymentChannel]:
         return self.payment_channel_repository.payment_channel_get(id)
+    
     def update_status(self, id: str, status: int) -> Optional[PaymentChannel]:
         return self.payment_channel_repository.update_status(id, status)
+    
     def update_config(self, id: str, config: str) -> Optional[PaymentChannel]:
         return self.payment_channel_repository.update_config(id, config)
+    
+    def get_stripe_config(self) -> Optional[Dict[str, Any]]:
+        """
+        获取 Stripe 支付渠道配置
+        
+        Returns:
+            Optional[Dict[str, Any]]: Stripe 配置信息，包含 secret 和 webhook_secret
+        """
+        try:
+            # 查找 id 为 "stripe" 的支付渠道
+            stripe_channel = self.payment_channel_repository.payment_channel_get("stripe")
+            
+            if not stripe_channel:
+                logger.warning("Stripe 支付渠道配置不存在")
+                return None
+                
+            if stripe_channel.status != 1:
+                logger.warning("Stripe 支付渠道已被禁用")
+                return None
+                
+            if not stripe_channel.config:
+                logger.warning("Stripe 支付渠道配置为空")
+                return None
+                
+            # 解析配置 JSON
+            try:
+                config = json.loads(stripe_channel.config)
+                # 验证必要字段
+                if not config.get("secret") or not config.get("webhook_secret"):
+                    logger.warning("Stripe 配置缺少必要字段: secret 或 webhook_secret")
+                    return None
+                    
+                logger.info("成功获取 Stripe 配置")
+                return config
+            except json.JSONDecodeError as e:
+                logger.error(f"解析 Stripe 配置 JSON 失败: {str(e)}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"获取 Stripe 配置失败: {str(e)}")
+            return None
