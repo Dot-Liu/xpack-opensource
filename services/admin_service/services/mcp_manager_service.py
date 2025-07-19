@@ -122,11 +122,21 @@ class McpManagerService:
             existing_service.long_description = body["long_description"]
         if "auth_method" in body:
             auth_method_value = body["auth_method"]
-            # 如果auth_method是None或者空字符串，就默认是free
-            if auth_method_value is None or auth_method_value == "":
+            # 如果auth_method是None、空字符串或者"none"，就默认是free
+            if auth_method_value is None or auth_method_value == "" or auth_method_value == "none":
                 existing_service.auth_method = AuthMethod.FREE
             else:
-                existing_service.auth_method = auth_method_value
+                # 确保传入的值是有效的AuthMethod值
+                try:
+                    if isinstance(auth_method_value, str):
+                        existing_service.auth_method = AuthMethod(auth_method_value.lower())
+                    else:
+                        existing_service.auth_method = auth_method_value
+                except ValueError:
+                    # 如果传入的值不是有效的AuthMethod，默认为FREE
+                    existing_service.auth_method = AuthMethod.FREE
+        else:
+            existing_service.auth_method = AuthMethod.FREE
         if "base_url" in body and body["base_url"] is not None:
             existing_service.base_url = body["base_url"]
         if "auth_header" in body and body["auth_header"] is not None:
@@ -134,7 +144,15 @@ class McpManagerService:
         if "auth_token" in body and body["auth_token"] is not None:
             existing_service.auth_token = body["auth_token"]
         if "charge_type" in body and body["charge_type"] is not None:
-            existing_service.charge_type = body["charge_type"]
+            charge_type_value = body["charge_type"]
+            try:
+                if isinstance(charge_type_value, str):
+                    existing_service.charge_type = ChargeType(charge_type_value.lower())
+                else:
+                    existing_service.charge_type = charge_type_value
+            except ValueError:
+                # 如果传入的值不是有效的ChargeType，默认为FREE
+                existing_service.charge_type = ChargeType.FREE
         if "price" in body and body["price"] is not None:
             existing_service.price = body["price"]
         if "tags" in body and body["tags"] is not None:
