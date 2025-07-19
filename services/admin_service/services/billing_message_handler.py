@@ -93,7 +93,8 @@ class BillingMessageHandler:
                 call_success=message_data["call_success"],
                 unit_price=Decimal(message_data["unit_price"]),
                 call_start_time=call_start_time,
-                call_end_time=call_end_time
+                call_end_time=call_end_time,
+                apikey=message_data.get("apikey")  # 支持旧版本消息没有该字段的情况
             )
         except (KeyError, ValueError, TypeError) as e:
             logger.error(f"消息解析失败: {str(e)}, 消息内容: {message_data}")
@@ -123,7 +124,8 @@ class BillingMessageHandler:
                 actual_cost=0.0,  # 初始为0，后续更新
                 call_start_time=billing_message.call_start_time,
                 call_end_time=billing_message.call_end_time,
-                process_status=ProcessStatus.PENDING
+                process_status=ProcessStatus.PENDING,
+                apikey=billing_message.apikey
             )
             
             created_log = self.call_log_repo.create(call_log)

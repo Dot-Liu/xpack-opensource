@@ -49,8 +49,12 @@ class McpController:
                 await self._send_error_response(request, 401, "Missing or invalid apikey parameter")
                 return
 
-            # 创建MCP服务器实例（传入用户ID用于计费）
-            mcp_server = await self.server_factory.create_server(service_id, user_id)
+            # 获取 apikey 用于记录日志（提取前10个字符用于审计）
+            apikey = request.query_params.get("apikey", "")
+            apikey_for_log = apikey[:10] if apikey else None
+
+            # 创建MCP服务器实例（传入用户ID和apikey用于计费和日志记录）
+            mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_for_log)
 
             # 注册连接到管理器
             connection_key = connection_manager.register_connection(service_id, user_id, client_ip)

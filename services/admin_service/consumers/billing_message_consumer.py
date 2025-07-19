@@ -84,13 +84,26 @@ class BillingMessageConsumer:
             )
             
             logger.info(f"开始消费队列: {self.queue_name}")
+            logger.info("Consumer is now waiting for messages. Press CTRL+C to exit")
+            
+            # 定期记录心跳日志，确保消费者线程在运行
+            import threading
+            def log_heartbeat():
+                while self.consuming:
+                    time.sleep(30)  # 每30秒记录一次心跳
+                    if self.consuming:
+                        logger.info(f"Consumer heartbeat - listening on queue: {self.queue_name}")
+            
+            heartbeat_thread = threading.Thread(target=log_heartbeat, daemon=True)
+            heartbeat_thread.start()
+            
             self.channel.start_consuming()
             
         except KeyboardInterrupt:
             logger.info("接收到中断信号，停止消费")
             self.stop_consuming()
         except Exception as e:
-            logger.error(f"消费消息时发生异常: {str(e)}")
+            logger.error(f"消费消息时发生异常: {str(e)}", exc_info=True)
             raise
     
     def stop_consuming(self):

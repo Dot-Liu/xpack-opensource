@@ -56,7 +56,7 @@ class RabbitMQClient:
                 properties = pika.BasicProperties(delivery_mode=2)  # 消息持久化
 
             self.channel.basic_publish(exchange="", routing_key=queue, body=message, properties=properties)
-            logger.debug(f"消息已发送到队列 {queue}")
+            logger.info(f"Message successfully published to queue: {queue}, message length: {len(message)} bytes")
 
         except Exception as e:
             logger.error(f"发送消息失败: {str(e)}")
