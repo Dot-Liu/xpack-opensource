@@ -26,6 +26,7 @@ class CreatePaymentLinkRequest(BaseModel):
     amount: float
     currency: str = "usd"
     payment_method: str = "stripe"
+    success_url: str = ""
 
 
 @router.post("/create_payment_link", response_model=dict)
@@ -46,9 +47,7 @@ def create_payment_link(request: Request, body: CreatePaymentLinkRequest, paymen
         return ResponseUtils.error(message="User not found", code=404)
 
     try:
-        base_url = RequestUtils.get_real_base_url(request)
-        logging.debug(f"base_url: {base_url}")
-        payment_info = payment.create_stripe_payment_link(base_url, user_id=user.id, amount=body.amount, currency=body.currency)
+        payment_info = payment.create_stripe_payment_link(body.success_url, user_id=user.id, amount=body.amount, currency=body.currency)
         if payment_info:
             return ResponseUtils.success({"pay_url": payment_info.get("payment_link"), "payment_id": payment_info.get("payment_id")})
     except Exception as e:

@@ -7,7 +7,6 @@ from services.admin_service.services import user_service
 from services.admin_service.services import user_wallet_history_service
 from services.common.models.user_wallet import UserWallet
 from services.common.models.user_wallet_history import UserWalletHistory
-from services.common.config import Config
 from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.user_wallet_repository import UserWalletRepository
 from services.admin_service.repositories.user_wallet_history_repository import UserWalletHistoryRepository
@@ -69,7 +68,7 @@ class PaymentService:
 
         # create Stripe Checkout Session
         params = {
-            "success_url": Config.PAY_SUCCESS_URL,
+            "success_url": base_url,
             "client_reference_id": user_wallet_history.id,
             "line_items": [
                 {
