@@ -29,8 +29,8 @@ def get_sysconfig(
     platform_name = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_NAME)
     platform_logo = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_LOGO)
     platform_url = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_URL)
-    admin_username = None
-    if admin_user:
+    admin_username = ""
+    if admin_user and admin_user.name:
         admin_username = admin_user.name
     login_google_client = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_CLIENT)
     login_google_secret = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_SECRET)
@@ -39,14 +39,14 @@ def get_sysconfig(
         login_google_enable = False
     else:
         login_google_enable = bool(login_google_enable)
-    
+
     # 获取邮件配置
     email_smtp_host = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_HOST)
     email_smtp_port = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PORT)
     email_smtp_user = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_USER)
     email_smtp_password = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PASSWORD)
     email_smtp_sender = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_SENDER)
-    
+
     return ResponseUtils.success(
         data={
             "platform": {
@@ -167,26 +167,22 @@ def test_email_config(
         test_email = body.get("email")
         if not test_email:
             return ResponseUtils.error("请提供测试邮箱地址")
-        
+
         # 测试连接配置
         success, message = EmailUtils.test_email_config(db)
         if not success:
             return ResponseUtils.error(message)
-        
+
         # 发送测试邮件
         test_success = EmailUtils.send_email(
-            db,
-            "XPack 邮件配置测试",
-            "这是一封测试邮件，用于验证邮件配置是否正确。如果您收到这封邮件，说明配置成功！",
-            test_email,
-            False
+            db, "XPack 邮件配置测试", "这是一封测试邮件，用于验证邮件配置是否正确。如果您收到这封邮件，说明配置成功！", test_email, False
         )
-        
+
         if test_success:
             return ResponseUtils.success(data={"message": "测试邮件发送成功，请检查收件箱"})
         else:
             return ResponseUtils.error("测试邮件发送失败")
-            
+
     except Exception as e:
         return ResponseUtils.error(f"测试邮件配置失败：{str(e)}")
 

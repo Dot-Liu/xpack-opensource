@@ -20,7 +20,7 @@ class SysConfigService:
             logger.warning(f"Redis connection failed, cache will be disabled: {e}")
             self.redis_client = None
 
-    def get_value_by_key(self, key: str) -> Optional[str]:
+    def get_value_by_key(self, key: str) -> str:
         """
         获取配置值，优先从缓存获取，缓存不存在则从数据库获取并缓存
 
@@ -28,7 +28,7 @@ class SysConfigService:
             key: 配置key
 
         Returns:
-            Optional[str]: 配置值，不存在返回None
+            str: 配置值，不存在或为null时返回空字符串
         """
         # 生成缓存key
         cache_key = RedisKeys.sys_config_key(key)
@@ -40,7 +40,7 @@ class SysConfigService:
                 if cached_value is not None:
                     logger.debug(f"Got sys_config {key} from cache")
                     # 特殊处理空值缓存
-                    return None if cached_value == "__NULL__" else cached_value
+                    return "" if cached_value == "__NULL__" else cached_value
             except Exception as e:
                 logger.warning(f"Failed to get cache for key {key}: {e}")
 
@@ -59,10 +59,10 @@ class SysConfigService:
                 except Exception as e:
                     logger.warning(f"Failed to cache key {key}: {e}")
 
-            return value
+            return value or ""
         except Exception as e:
             logger.error(f"Failed to get sys_config {key} from database: {e}")
-            return None
+            return ""
 
     def delete_by_key(self, key: str) -> bool:
         """删除配置并清除缓存"""
