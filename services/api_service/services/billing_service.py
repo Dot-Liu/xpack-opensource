@@ -18,7 +18,7 @@ from services.common.models.user_wallet import UserWallet
 from services.common.database import get_db
 from services.api_service.repositories.mcp_service_repository import McpServiceRepository
 from services.api_service.repositories.user_wallet_repository import UserWalletRepository
-from services.api_service.utils.logging_config import get_logger
+from services.common.logging_config import get_logger
 
 logger = get_logger(__name__)
 

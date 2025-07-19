@@ -197,7 +197,7 @@ def get_mcp_service_list(
                 "charge_type": service.charge_type.value if service.charge_type else None,
                 "price": float(service.price) if service.price else 0.0,
                 "enabled": service.enabled,
-                "tags": service.tags,
+                "tags": service.tags.split(',') if service.tags else [],
                 "created_at": str(service.created_at) if service.created_at else None,
                 "updated_at": str(service.updated_at) if service.updated_at else None,
             }

@@ -16,7 +16,7 @@ from services.api_service.services.mcp_service import McpService
 from services.api_service.services.mcp_tool_service import McpToolService
 from services.api_service.services.billing_service import billing_service
 from services.common.models.billing import ApiCallLogInfo
-from services.api_service.utils.logging_config import get_logger
+from services.common.logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -39,21 +39,21 @@ class McpServerFactory:
         Returns:
             Server: 配置好的MCP服务器实例
         """
-        logger.info(f"创建MCP服务器实例 - 服务ID: {service_id}, 用户ID: {user_id}")
+        logger.info(f"Creating MCP server instance - Service ID: {service_id}, User ID: {user_id}")
 
         app = Server(f"mcp-service-{service_id}")
 
-        # 注册工具列表处理器
+        # Register tools list handler
         @app.list_tools()
         async def list_tools() -> List[types.Tool]:
-            """返回该服务可用的工具列表"""
+            """Return available tools list for this service"""
             return await self._handle_list_tools(service_id)
 
-        # 注册工具调用处理器
+        # Register tool call handler
         @app.call_tool()
         async def call_tool(name: str, arguments: dict) -> List[types.Content]:
-            """执行指定的工具"""
-            # user_id 必须存在，否则不应该到达这里
+            """Execute specified tool"""
+            # user_id must exist, otherwise we shouldn't reach here
             if not user_id:
                 error_msg = "Missing user authentication"
                 logger.error(error_msg)
@@ -61,7 +61,7 @@ class McpServerFactory:
             
             return await self._handle_call_tool_with_billing(service_id, name, arguments, user_id)
 
-        logger.info("MCP服务器实例创建完成")
+        logger.info("MCP server instance created successfully")
         return app
 
     async def _handle_list_tools(self, service_id: str) -> List[types.Tool]:
@@ -147,35 +147,35 @@ class McpServerFactory:
             # 创建服务实例
             mcp_service = self._create_mcp_service(db)
 
-            # 查找工具配置
+            # Find tool configuration
             tool_config = mcp_service.get_tool_by_name(service_id, name)
             if not tool_config:
                 error_msg = f"Unknown tool: {name}"
                 logger.error(error_msg)
                 raise ValueError(error_msg)
 
-            logger.info(f"找到工具配置: {tool_config.name}")
+            logger.info(f"Found tool configuration: {tool_config.name}")
 
-            # 获取服务认证信息
+            # Get service authentication info
             auth_info = mcp_service.get_service_auth_info(service_id)
-            logger.debug(f"认证信息: {auth_info}")
+            logger.debug(f"Authentication info: {auth_info}")
 
-            # 执行工具
+            # Execute tool
             result = await self.tool_service.execute_tool(tool_config, arguments, auth_info)
             call_success = True
-            logger.info(f"工具调用成功 - 用户ID: {user_id}, 工具: {name}")
+            logger.info(f"Tool call successful - User ID: {user_id}, Tool: {name}")
 
         except Exception as e:
-            logger.error(f"工具调用失败 - 用户ID: {user_id}, 工具: {name}: {str(e)}", exc_info=True)
+            logger.error(f"Tool call failed - User ID: {user_id}, Tool: {name}: {str(e)}", exc_info=True)
             call_success = False
-            # 返回错误信息而不是抛出异常，保持MCP协议的稳定性
+            # Return error message instead of throwing exception to maintain MCP protocol stability
             error_msg = f"Tool execution failed: {str(e)}"
             result = [types.TextContent(type="text", text=error_msg)]
 
         finally:
             db.close()
 
-        # 3. 发送计费消息
+        # 3. Send billing message
         call_end_time = datetime.now(timezone.utc)
         call_log = ApiCallLogInfo(
             user_id=user_id,
@@ -189,7 +189,7 @@ class McpServerFactory:
         )
 
         await self.billing_service.send_billing_message(call_log, call_success, call_end_time)
-        logger.info(f"计费消息已发送 - 用户ID: {user_id}, 工具: {name}, 成功: {call_success}")
+        logger.info(f"Billing message sent - User ID: {user_id}, Tool: {name}, Success: {call_success}")
 
         # 确保返回类型正确
         return result

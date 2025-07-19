@@ -6,6 +6,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from services.common.config import Config
+from services.common.logging_config import setup_logging, get_logger
 from services.admin_service.controllers import user_contoller
 from services.admin_service.controllers import auth_controller
 from services.admin_service.controllers import user_apikey_controller
@@ -22,7 +23,9 @@ from services.admin_service.controllers import email_test_controller
 from services.admin_service.consumers.billing_message_consumer import BillingMessageConsumer
 from services.admin_service.middleware import AuthMiddleware
 
-logger = logging.getLogger(__name__)
+# Setup logging for admin service
+setup_logging("admin_service")
+logger = get_logger(__name__)
 
 # 全局消费者实例
 consumer_instance = None
@@ -30,14 +33,14 @@ consumer_thread = None
 
 
 def start_billing_consumer():
-    """在后台线程中启动计费消费者"""
+    """Start billing consumer in background thread"""
     global consumer_instance
     try:
-        logger.info("正在启动计费消息消费者...")
+        logger.info("Starting billing message consumer...")
         consumer_instance = BillingMessageConsumer()
         consumer_instance.start_consuming()
     except Exception as e:
-        logger.error(f"计费消费者启动失败: {str(e)}", exc_info=True)
+        logger.error(f"Failed to start billing consumer: {str(e)}", exc_info=True)
 
 
 def stop_billing_consumer():
@@ -50,22 +53,22 @@ def stop_billing_consumer():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
+    """Application lifecycle management"""
     global consumer_thread
     
-    # 启动时：在单独线程中启动消费者
-    logger.info("Admin Service 启动中...")
+    # Startup: Start consumer in separate thread
+    logger.info("Admin Service starting...")
     try:
         consumer_thread = threading.Thread(target=start_billing_consumer, daemon=True)
         consumer_thread.start()
-        logger.info("计费消息消费者已在后台启动")
+        logger.info("Billing message consumer started in background")
     except Exception as e:
-        logger.error(f"启动计费消费者失败: {str(e)}")
+        logger.error(f"Failed to start billing consumer: {str(e)}")
     
     yield
     
-    # 关闭时：停止消费者
-    logger.info("Admin Service 关闭中...")
+    # Shutdown: Stop consumer
+    logger.info("Admin Service shutting down...")
     stop_billing_consumer()
 
 
@@ -96,7 +99,7 @@ app.include_router(web_controller.router, prefix="/api/web")
 app.include_router(stats_data.router, prefix="/api/overview")
 app.include_router(email_test_controller.router, prefix="/api/email_test")
 
-logging.basicConfig(level=logging.DEBUG)
+# Logging is already configured by setup_logging("admin_service")
 
 
 @app.get("/")

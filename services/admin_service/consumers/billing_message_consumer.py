@@ -51,17 +51,17 @@ class BillingMessageConsumer:
                 # 设置QoS，一次只处理一条消息
                 self.channel.basic_qos(prefetch_count=1)
                 
-                logger.info("RabbitMQ连接建立成功")
+                logger.info("RabbitMQ connection established successfully")
                 return
                 
             except Exception as e:
-                logger.error(f"建立RabbitMQ连接失败 (尝试 {attempt + 1}/{max_retries}): {str(e)}")
+                logger.error(f"Failed to establish RabbitMQ connection (attempt {attempt + 1}/{max_retries}): {str(e)}")
                 
                 if attempt < max_retries - 1:
-                    logger.info(f"等待 {retry_delay} 秒后重试...")
+                    logger.info(f"Waiting {retry_delay} seconds before retry...")
                     time.sleep(retry_delay)
                 else:
-                    logger.error("所有连接尝试均失败")
+                    logger.error("All connection attempts failed")
                     raise
     
     def start_consuming(self):

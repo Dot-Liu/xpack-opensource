@@ -16,6 +16,24 @@ from services.admin_service.services.openapi_helper import OpenApiForAI
 
 logger = logging.getLogger(__name__)
 
+# 工具函数：将tags字符串转换为数组
+def parse_tags_to_array(tags_str: Optional[str]) -> list[str]:
+    """
+    将tags字符串转换为数组
+    
+    Args:
+        tags_str: tags字符串，用半角逗号分隔
+        
+    Returns:
+        list[str]: tags数组
+    """
+    if not tags_str:
+        return []
+    
+    # 按半角逗号分割，去除空白字符
+    tags = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
+    return tags
+
 
 def normalize_slug_name(text: str) -> str:
     """将文本转换为适合作为slug的英文字符串"""
@@ -237,7 +255,7 @@ class McpManagerService:
             "charge_type": service.charge_type.value if service.charge_type else None,
             "price": str(float(service.price)) if service.price else "0.00",
             "enabled": service.enabled,
-            "tags": service.tags,
+            "tags": parse_tags_to_array(service.tags),
             "apis": [{"id": api.id, "name": api.name, "description": api.description} for api in apis],
         }
 
@@ -410,7 +428,7 @@ class McpManagerService:
                 "charge_type": temp_service.charge_type.value if temp_service.charge_type else None,
                 "price": str(float(temp_service.price)) if temp_service.price else "0.00",
                 "enabled": temp_service.enabled,
-                "tags": temp_service.tags,
+                "tags": parse_tags_to_array(temp_service.tags),
                 "apis": apis_list,
             }
 
@@ -442,7 +460,7 @@ class McpManagerService:
                 "name": service.name,
                 "short_description": service.short_description,
                 "long_description": service.long_description,
-                "tags": service.tags or "",
+                "tags": parse_tags_to_array(service.tags),
                 "slug_name": service.slug_name,
                 "charge_type": service.charge_type.value if service.charge_type else "free",
                 "price": str(float(service.price)) if service.price else "0.00",
@@ -477,7 +495,7 @@ class McpManagerService:
             "slug_name": service.slug_name,
             "charge_type": service.charge_type.value if service.charge_type else "free",
             "price": f"{float(service.price):.2f}" if service.price else "0.00",
-            "tags": service.tags or "",
+            "tags": parse_tags_to_array(service.tags),
             "apis": api_list,
         }
 

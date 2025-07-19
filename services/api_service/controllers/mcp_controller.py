@@ -9,7 +9,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 from mcp.server.sse import SseServerTransport
 from services.api_service.services.mcp_server_factory import McpServerFactory
-from services.api_service.utils.logging_config import get_logger
+from services.common.logging_config import get_logger
 from services.api_service.repositories.user_apikey_repository import UserApiKeyRepository
 from services.api_service.utils.connection_manager import connection_manager
 from services.common.database import get_db

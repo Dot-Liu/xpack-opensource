@@ -25,9 +25,9 @@ class RabbitMQClient:
             )
             self.connection = pika.BlockingConnection(parameters)
             self.channel = self.connection.channel()
-            logger.info("RabbitMQ连接建立成功")
+            logger.info("RabbitMQ connection established successfully")
         except Exception as e:
-            logger.error(f"建立RabbitMQ连接失败: {str(e)}")
+            logger.error(f"Failed to establish RabbitMQ connection: {str(e)}")
             raise
 
     def publish(self, queue: str, message: str, persistent: bool = True):

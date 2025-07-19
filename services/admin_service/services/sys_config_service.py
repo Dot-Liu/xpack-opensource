@@ -39,7 +39,7 @@ class SysConfigService:
                 cached_value = self.redis_client.get(cache_key)
                 if cached_value is not None:
                     logger.debug(f"Got sys_config {key} from cache")
-                    # 特殊处理空值缓存
+                    # Special handling for null value cache
                     return "" if cached_value == "__NULL__" else cached_value
             except Exception as e:
                 logger.warning(f"Failed to get cache for key {key}: {e}")

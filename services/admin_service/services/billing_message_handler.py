@@ -41,31 +41,31 @@ class BillingMessageHandler:
             bool: 处理是否成功
         """
         try:
-            # 解析消息
+            # Parse message
             billing_message = self._parse_message(message_data)
             if not billing_message:
                 return False
             
-            # 创建API调用记录
+            # Create API call log
             call_log_id = self._create_call_log(billing_message)
             if not call_log_id:
                 return False
             
-            # 处理计费逻辑
+            # Process billing logic
             if billing_message.call_success and billing_message.unit_price > 0:
                 success = self._process_billing(billing_message, call_log_id)
                 if not success:
-                    # 更新记录状态为失败
-                    self.call_log_repo.update_status(call_log_id, ProcessStatus.FAILED, "计费处理失败")
+                    # Update record status to failed
+                    self.call_log_repo.update_status(call_log_id, ProcessStatus.FAILED, "Billing processing failed")
                     return False
             
-            # 更新记录状态为已处理
+            # Update record status to processed
             self.call_log_repo.update_status(call_log_id, ProcessStatus.PROCESSED)
-            logger.info(f"计费消息处理成功 - 用户ID: {billing_message.user_id}, 工具: {billing_message.tool_name}")
+            logger.info(f"Billing message processed successfully - User ID: {billing_message.user_id}, Tool: {billing_message.tool_name}")
             return True
             
         except Exception as e:
-            logger.error(f"处理计费消息失败: {str(e)}", exc_info=True)
+            logger.error(f"Failed to process billing message: {str(e)}", exc_info=True)
             return False
     
     def _parse_message(self, message_data: dict) -> Optional[BillingMessage]:

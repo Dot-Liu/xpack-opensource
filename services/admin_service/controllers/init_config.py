@@ -39,13 +39,15 @@ def get_config(db: Session = Depends(get_db)):
 
         # 获取登录配置
         google_client_id = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_CLIENT) or ""
-        google_is_enabled = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_ENABLE) or "false"
+        google_is_enabled_raw = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_ENABLE) or "false"
+        # 转换为布尔类型
+        google_is_enabled = google_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
 
         # 构建响应数据
         config_data = {
             "login": {"google": {"client_id": google_client_id, "is_enabled": google_is_enabled}},
             "platform": {
-                "name": platform_name, 
+                "name": platform_name,
                 "logo": platform_logo,
                 "website_title": website_title,
                 "headline": headline,

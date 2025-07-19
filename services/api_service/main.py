@@ -12,23 +12,23 @@ import logging
 import time
 
 from services.common.config import Config
+from services.common.logging_config import setup_logging, get_logger
 from services.api_service.controllers.mcp_controller import McpController
-from services.api_service.utils.logging_config import setup_logging, get_logger
 from services.api_service.utils.connection_manager import connection_manager
 
-# 配置日志
-setup_logging()
+# Setup logging for api service
+setup_logging("api_service")
 logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
-    logger.info(f"MCP Streamable HTTP Service 启动中... 端口: {Config.API_PORT}")
+    """Application lifecycle management"""
+    logger.info(f"MCP Streamable HTTP Service starting... Port: {Config.API_PORT}")
     
     yield
     
-    logger.info("MCP Streamable HTTP Service 关闭中...")
+    logger.info("MCP Streamable HTTP Service shutting down...")
 
 
 # 创建FastAPI应用
@@ -152,8 +152,7 @@ mcp_app = Starlette(routes=mcp_routes)
 # 将MCP子应用挂载到FastAPI应用上
 app.mount("/mcp", mcp_app)
 
-# 配置日志级别
-logging.basicConfig(level=logging.INFO)
+# Logging is already configured by setup_logging("api_service")
 
 if __name__ == "__main__":
     import uvicorn
