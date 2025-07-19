@@ -179,8 +179,19 @@
       }
 
       .adapt-img {
-        width: 100% !important;
-        height: auto !important
+        max-width: 100% !important;
+        height: auto !important;
+        width: auto !important;
+        object-fit: contain !important
+      }
+
+      /* Logo specific styles */
+      .logo-img {
+        max-width: 200px !important;
+        max-height: 60px !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain !important
       }
 
       .h-auto {
@@ -236,10 +247,10 @@
                                 <td align="center" style="padding:0;Margin:0;font-size:0"><a target="_blank"
                                     href="#"
                                     style="mso-line-height-rule:exactly;text-decoration:underline;color:#5C68E2;font-size:14px"><img
-                                      alt="" width="100"
+                                      alt="{{platform_name}} Logo"
                                       src="{{platform_logo_url}}"
-                                      class="adapt-img" height="20"
-                                      style="display:block;font-size:14px;border:0;outline:none;text-decoration:none"></a>
+                                      class="adapt-img logo-img"
+                                      style="display:block;font-size:14px;border:0;outline:none;text-decoration:none;max-width:200px;width:auto;height:auto;max-height:60px;object-fit:contain"></a>
                                 </td>
                               </tr>
                             </table>
