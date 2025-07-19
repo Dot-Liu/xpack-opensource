@@ -57,19 +57,19 @@ def get_sysconfig(
             "account": {
                 "username": admin_username,
             },
+            "email": {
+                "smtp_host": email_smtp_host,
+                "smtp_port": email_smtp_port,
+                "smtp_user": email_smtp_user,
+                "smtp_password": email_smtp_password,
+                "smtp_sender": email_smtp_sender,
+            },
             "login": {
                 "google": {
                     "client_id": login_google_client,
                     "client_secret": login_google_secret,
                     "is_enabled": login_google_enable,
                 },
-                "email": {
-                    "smtp_host": email_smtp_host,
-                    "smtp_port": email_smtp_port,
-                    "smtp_user": email_smtp_user,
-                    "smtp_password": email_smtp_password,
-                    "smtp_sender": email_smtp_sender,
-                }
             },
         }
     )
@@ -112,8 +112,8 @@ def set_sysconfig(
         login_google_secret = google_config.get("client_secret")
         login_google_enable = google_config.get("is_enabled", False)  # 设置默认值为 False
 
-        # 获取邮件配置
-        email_config = login.get("email", {})
+        # 获取邮件配置 - 现在从外层获取
+        email_config = body.get("email", {})
         email_smtp_host = email_config.get("smtp_host")
         email_smtp_port = email_config.get("smtp_port")
         email_smtp_user = email_config.get("smtp_user")
