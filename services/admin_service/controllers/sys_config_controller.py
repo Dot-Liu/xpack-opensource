@@ -27,6 +27,7 @@ def get_sysconfig(
 
     platform_name = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_NAME)
     platform_logo = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_LOGO)
+    platform_url = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_URL)
     admin_username = None
     if admin_user:
         admin_username = admin_user.name
@@ -37,11 +38,20 @@ def get_sysconfig(
         login_google_enable = False
     else:
         login_google_enable = bool(login_google_enable)
+    
+    # 获取邮件配置
+    email_smtp_host = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_HOST)
+    email_smtp_port = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PORT)
+    email_smtp_user = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_USER)
+    email_smtp_password = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PASSWORD)
+    email_smtp_sender = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_SENDER)
+    
     return ResponseUtils.success(
         data={
             "platform": {
                 "name": platform_name,
                 "logo": platform_logo,
+                "url": platform_url,
             },
             "account": {
                 "username": admin_username,
@@ -51,6 +61,13 @@ def get_sysconfig(
                     "client_id": login_google_client,
                     "client_secret": login_google_secret,
                     "is_enabled": login_google_enable,
+                },
+                "email": {
+                    "smtp_host": email_smtp_host,
+                    "smtp_port": email_smtp_port,
+                    "smtp_user": email_smtp_user,
+                    "smtp_password": email_smtp_password,
+                    "smtp_sender": email_smtp_sender,
                 }
             },
         }
@@ -66,16 +83,23 @@ def set_sysconfig(
     try:
         platform_name = ""
         platform_logo = ""
+        platform_url = ""
         admin_username = ""
         admin_password = ""
         login_google_client = ""
         login_google_secret = ""
         login_google_enable = ""
+        email_smtp_host = ""
+        email_smtp_port = ""
+        email_smtp_user = ""
+        email_smtp_password = ""
+        email_smtp_sender = ""
 
         # 使用 get 方法安全地获取嵌套值
         platform = body.get("platform", {})
         platform_name = platform.get("name")
         platform_logo = platform.get("logo")
+        platform_url = platform.get("url")
 
         account = body.get("account", {})
         admin_username = account.get("username")
@@ -87,6 +111,14 @@ def set_sysconfig(
         login_google_secret = google_config.get("client_secret")
         login_google_enable = google_config.get("is_enabled", False)  # 设置默认值为 False
 
+        # 获取邮件配置
+        email_config = login.get("email", {})
+        email_smtp_host = email_config.get("smtp_host")
+        email_smtp_port = email_config.get("smtp_port")
+        email_smtp_user = email_config.get("smtp_user")
+        email_smtp_password = email_config.get("smtp_password")
+        email_smtp_sender = email_config.get("smtp_sender")
+
         if not login_google_enable or login_google_enable == "false":
             login_google_enable = "False"
         else:
@@ -95,9 +127,15 @@ def set_sysconfig(
         configs = [
             (sys_config_key.KEY_PLATFORM_NAME, platform_name, "平台名称"),
             (sys_config_key.KEY_PLATFORM_LOGO, platform_logo, "平台logo"),
+            (sys_config_key.KEY_PLATFORM_URL, platform_url, "平台访问地址"),
             (sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, login_google_client, "谷歌登录客户端ID"),
             (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "谷歌登录客户端密钥"),
             (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "谷歌登录是否启用"),
+            (sys_config_key.KEY_EMAIL_SMTP_HOST, email_smtp_host, "邮件SMTP主机"),
+            (sys_config_key.KEY_EMAIL_SMTP_PORT, email_smtp_port, "邮件SMTP端口"),
+            (sys_config_key.KEY_EMAIL_SMTP_USER, email_smtp_user, "邮件SMTP用户名"),
+            (sys_config_key.KEY_EMAIL_SMTP_PASSWORD, email_smtp_password, "邮件SMTP密码"),
+            (sys_config_key.KEY_EMAIL_SMTP_SENDER, email_smtp_sender, "邮件发送者地址"),
         ]
 
         # 更新管理员用户名和密码
