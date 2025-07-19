@@ -72,3 +72,18 @@ class UserRepository:
 
         users = self.db.query(User).filter(User.is_deleted == 0).offset(offset).limit(limit).all()
         return total, users
+
+    def get_admin_user(self) -> Optional[User]:
+        return self.db.query(User).filter(User.role_id == 1, User.is_deleted == 0).first()
+
+    def update_admin_user(self, name: Optional[str], password: Optional[str]) -> Optional[User]:
+        admin_user = self.get_admin_user()
+        if not admin_user:
+            return None
+        if name:
+            admin_user.name = name
+        if password:
+            admin_user.password = password
+        self.db.commit()
+        self.db.refresh(admin_user)
+        return admin_user

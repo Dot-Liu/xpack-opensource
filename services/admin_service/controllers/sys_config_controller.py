@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.sys_config_service import SysConfigService
+from services.admin_service.services.user_service import UserService
 from services.admin_service.constants import sys_config_key
 
 router = APIRouter()
@@ -13,11 +14,21 @@ def get_sysconfig_service(db: Session = Depends(get_db)) -> SysConfigService:
     return SysConfigService(db)
 
 
+def get_user_service(db: Session = Depends(get_db)) -> UserService:
+    return UserService(db)
+
+
 @router.get("/info")
-def get_sysconfig(sysconfig_service: SysConfigService = Depends(get_sysconfig_service)):
+def get_sysconfig(
+    sysconfig_service: SysConfigService = Depends(get_sysconfig_service), user_service: UserService = Depends(get_user_service)
+):
+    admin_user = user_service.get_admin_user()
+
     platform_name = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_NAME)
     platform_logo = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_LOGO)
-    admin_username = sysconfig_service.get_value_by_key(sys_config_key.KEY_ADMIN_USERNAME)
+    admin_username = None
+    if admin_user:
+        admin_username = admin_user.name
     login_google_client = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_CLIENT)
     login_google_secret = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_SECRET)
     login_google_enable = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_ENABLE)
@@ -47,8 +58,9 @@ def get_sysconfig(sysconfig_service: SysConfigService = Depends(get_sysconfig_se
 
 @router.put("/info")
 def set_sysconfig(
-    sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
     body: dict = Body(...),
+    user_service: UserService = Depends(get_user_service),
+    sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
 ):
     try:
         platform_name = ""
@@ -82,12 +94,13 @@ def set_sysconfig(
         configs = [
             (sys_config_key.KEY_PLATFORM_NAME, platform_name, "平台名称"),
             (sys_config_key.KEY_PLATFORM_LOGO, platform_logo, "平台logo"),
-            (sys_config_key.KEY_ADMIN_USERNAME, admin_username, "管理员账号"),
-            (sys_config_key.KEY_ADMIN_PASSWORD, admin_password, "管理员密码"),
             (sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, login_google_client, "谷歌登录客户端ID"),
             (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "谷歌登录客户端密钥"),
             (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "谷歌登录是否启用"),
         ]
+
+        # 更新管理员用户名和密码
+        user_service.update_admin(name=admin_username, password=admin_password)
 
         for key, value, desc in configs:
             if value is not None:  # 只更新有值的配置

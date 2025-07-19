@@ -35,3 +35,11 @@ class UserService:
     def get_user_list(self, offset: int, limit: int) -> tuple[int, list[User]]:
         """获取用户列表"""
         return self.user_repository.get_user_list(offset, limit)
+
+    def get_admin_user(self) -> Optional[User]:
+        """获取管理员用户"""
+        return self.user_repository.get_admin_user()
+
+    def update_admin(self, name: str, password: str) -> Optional[User]:
+        """修改管理员用户信息"""
+        return self.user_repository.update_admin_user(name=name, password=password)
