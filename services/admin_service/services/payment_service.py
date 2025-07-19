@@ -15,6 +15,7 @@ from services.admin_service.services.payment_channel_service import PaymentChann
 
 logger = logging.getLogger(__name__)
 
+
 class PaymentService:
 
     def __init__(self, db: Session):
@@ -26,7 +27,7 @@ class PaymentService:
     def _get_stripe_config(self) -> Optional[dict]:
         """
         获取 Stripe 配置
-        
+
         Returns:
             Optional[dict]: Stripe 配置信息，包含 secret 和 webhook_secret
         """
@@ -35,7 +36,7 @@ class PaymentService:
     def _configure_stripe_key(self) -> bool:
         """
         配置 Stripe API Key
-        
+
         Returns:
             bool: 配置是否成功
         """
@@ -43,17 +44,17 @@ class PaymentService:
         if not stripe_config:
             logger.error("无法获取 Stripe 配置")
             return False
-        
+
         stripe.api_key = stripe_config.get("secret")
         return True
 
     logging = logging.getLogger(__name__)
 
-    def create_stripe_payment_link(self, user_id: str, amount: float, currency: str = "usd") -> Optional[dict]:
+    def create_stripe_payment_link(self, base_url: str, user_id: str, amount: float, currency: str = "usd") -> Optional[dict]:
         # 配置 Stripe API Key
         if not self._configure_stripe_key():
             raise RuntimeError("Stripe 配置错误")
-        
+
         # get user information
         user = self.user_repository.get_by_id(user_id)
         if not user:
@@ -96,12 +97,12 @@ class PaymentService:
         if not stripe_config:
             logger.error("无法获取 Stripe 配置，无法验证 webhook")
             return False
-        
+
         webhook_secret = stripe_config.get("webhook_secret")
         if not webhook_secret:
             logger.error("Stripe webhook_secret 配置缺失")
             return False
-        
+
         try:
             # 验证 Webhook 签名
             event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)

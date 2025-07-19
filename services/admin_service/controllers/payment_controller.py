@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import asyncio
+import logging
 
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
@@ -44,7 +45,9 @@ def create_payment_link(request: Request, body: CreatePaymentLinkRequest, paymen
         return ResponseUtils.error(message="User not found", code=404)
 
     try:
-        payment_info = payment.create_stripe_payment_link(user_id=user.id, amount=body.amount, currency=body.currency)
+        base_url = f"{request.url.scheme}://{request.url.netloc}"  # http://domain.com 或 https://domain.com
+        logging.debug(f"base_url: {base_url}")
+        payment_info = payment.create_stripe_payment_link(base_url, user_id=user.id, amount=body.amount, currency=body.currency)
         if payment_info:
             return ResponseUtils.success({"pay_url": payment_info.get("payment_link"), "payment_id": payment_info.get("payment_id")})
     except Exception as e:
