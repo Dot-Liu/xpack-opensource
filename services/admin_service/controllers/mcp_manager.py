@@ -29,6 +29,7 @@ def get_mcp_manager(db: Session = Depends(get_db)) -> McpManagerService:
 
 @router.put("/service/enabled", summary="On/Off MCP service")
 def update_mcp_service_enabled(request: Request, body: dict = Body(...), mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+    """Enable or disable MCP service by ID."""
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
 
@@ -43,6 +44,7 @@ def update_mcp_service_enabled(request: Request, body: dict = Body(...), mcp_man
 
 @router.put("/service", summary="Update MCP service information")
 def update_mcp_service_info(request: Request, body: dict = Body(...), mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+    """Update MCP service information and configuration."""
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
 
@@ -62,6 +64,7 @@ def update_mcp_service_info(request: Request, body: dict = Body(...), mcp_manage
 
 @router.delete("/service", summary="Delete MCP service")
 def delete_mcp_service(body: dict = Body(...), mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+    """Delete MCP service by ID."""
     id = body.get("id")
     if not id:
         return ResponseUtils.error(error_msg=error_msg.PARAM_REQUIRED)
@@ -76,6 +79,7 @@ async def openapi_parse(
     file: Optional[UploadFile] = File(None, description="OpenAPI document file (JSON/YAML, optional)"),
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
 ):
+    """Parse and import OpenAPI document from URL or file upload."""
     try:
         if url:
             url_str = str(url)
@@ -108,7 +112,7 @@ async def openapi_parse_update(
     file: Optional[UploadFile] = File(None, description="OpenAPI document file (JSON/YAML, optional)"),
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
 ):
-    """解析OpenAPI文档并更新现有服务，将数据保存到临时表"""
+    """Parse OpenAPI document and update existing service with temporary data."""
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
 
@@ -144,7 +148,7 @@ async def openapi_parse_update(
 
 @router.get("/service/info", summary="获取MCP服务信息")
 def get_mcp_service_info(request: Request, id: str, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
-    """获取单个MCP服务的详细信息，包括API列表"""
+    """Get detailed information of a specific MCP service including API list."""
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
 
@@ -166,7 +170,7 @@ def get_mcp_service_info(request: Request, id: str, mcp_manager_service: McpMana
 def get_mcp_service_list(
     request: Request, page: int = 1, page_size: int = 10, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)
 ):
-    """获取所有MCP服务列表（分页）"""
+    """Get paginated list of all MCP services."""
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
 

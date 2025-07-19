@@ -43,6 +43,32 @@ services/
 - 统一异常处理格式
 - 记录必要的错误日志
 
+### 日志规范
+- **语言要求**：所有日志消息必须使用英文
+- **格式统一**：使用 `services/common/logging_config.py` 提供的统一日志格式
+- **日志级别**：
+  - `DEBUG`: 详细调试信息
+  - `INFO`: 一般信息记录
+  - `WARNING`: 警告信息
+  - `ERROR`: 错误信息
+  - `CRITICAL`: 严重错误
+- **消息格式**：
+  ```python
+  # ✅ 正确示例
+  logger.info("Starting to download content from URL: {url}")
+  logger.error("Failed to process request: {error_message}")
+  logger.warning("Invalid content type detected: {content_type}")
+  
+  # ❌ 错误示例
+  logger.info(f"开始从URL下载内容: {url}")  # 中文消息
+  logger.error(f"处理请求失败: {error_message}")  # 中文消息
+  ```
+- **日志内容**：
+  - 使用描述性的英文消息
+  - 包含必要的上下文信息（如 URL、用户ID、操作类型等）
+  - 避免敏感信息（如密码、API密钥）
+  - 使用结构化的消息格式便于后续分析
+
 ### 数据库操作
 - 通过 `services/common/database.py` 进行数据库连接
 - 使用 Repository 模式进行数据访问
@@ -77,7 +103,9 @@ services/
    - 考虑错误处理和异常情况
 
 4. **代码实现**
-   - 实现代码前先需要确认。
+   - 实现代码前先需要确认
+   - 确保所有日志消息使用英文
+   - 遵循统一的日志格式规范
 
 **⚠️ 重要提醒：只有在完成上述思路整理并得到确认后，才能开始编写代码！**
 
@@ -115,6 +143,6 @@ services/
 ## 代码审查要点
 - 是否遵循了服务依赖规则
 - 错误处理是否完整
-- 是否有适当的日志记录
+- 是否有适当的日志记录（英文格式，统一格式）
 - 性能和安全考虑
 - 代码注释和文档完整性

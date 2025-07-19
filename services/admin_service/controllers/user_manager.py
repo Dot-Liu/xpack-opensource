@@ -26,16 +26,7 @@ async def delete_user(
     id: str,
     user_service: UserService = Depends(get_user_service),
 ):
-    """
-    Delete user by id
-
-    Args:
-        id (str): User id
-        db (Session): Database session
-
-    Returns:
-        bool: True if deletion was successful, False otherwise
-    """
+    """Delete user by ID."""
 
     user = user_service.delete(id)
     if not user:
@@ -50,17 +41,7 @@ async def get_user_list(
     user_service: UserService = Depends(get_user_service),
     user_wallet_service: UserWalletService = Depends(get_user_wallet_service),
 ):
-    """
-    Get User List
-
-    Args:
-        page (Optional[int], optional): Current page number. Defaults to 1.
-        page_size (Optional[int], optional): Number of items per page. Defaults to 10.
-        db (Session, optional): Database session dependency.
-
-    Returns:
-        dict: A dictionary containing user list, pagination information, and success code.
-    """
+    """Get paginated list of users with wallet information."""
     # 计算偏移量
     skip = (page - 1) * page_size
 

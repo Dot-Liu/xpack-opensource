@@ -24,6 +24,7 @@ def get_sysconfig(
     sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
     user_service: UserService = Depends(get_user_service),
 ):
+    """Get all system configuration settings."""
     admin_user = user_service.get_admin_user()
 
     platform_name = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_NAME)
@@ -89,6 +90,7 @@ def set_sysconfig(
     user_service: UserService = Depends(get_user_service),
     sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
 ):
+    """Update system configuration settings."""
     try:
         platform_name = ""
         platform_logo = ""
@@ -177,12 +179,7 @@ def test_email_config(
     body: dict = Body(...),
     db: Session = Depends(get_db),
 ):
-    """
-    测试邮件配置是否有效
-    :param body: 包含测试邮箱地址的请求体 {"email": "test@example.com"}
-    :param db: 数据库会话
-    :return: 测试结果
-    """
+    """Test email configuration with a test message."""
     try:
         test_email = body.get("email")
         if not test_email:

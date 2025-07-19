@@ -25,17 +25,7 @@ class McpController:
         self.server_factory = McpServerFactory()
 
     async def handle_sse_connection(self, request: Request) -> Response:
-        """
-        处理MCP Streamable HTTP的SSE连接请求
-        
-        支持连接恢复机制，当服务重启后客户端可以重新连接
-
-        Args:
-            request: Starlette请求对象
-
-        Returns:
-            Response: HTTP响应
-        """
+        """Handle MCP Streamable HTTP SSE connection with resume capability."""
         # 获取连接标识信息
         client_ip = request.client.host if request.client else "unknown"
         user_agent = request.headers.get("user-agent", "unknown")
@@ -91,17 +81,7 @@ class McpController:
             return Response(f"Internal server error: {str(e)}", status_code=500)
 
     def _extract_service_id(self, request: Request) -> Optional[str]:
-        """
-        从请求中提取service_id，支持ID和slug_name两种模式
-        
-        如果传入的是slug_name，会查询数据库获取对应的服务ID
-
-        Args:
-            request: Starlette请求对象
-
-        Returns:
-            Optional[str]: 服务ID，如果不存在则返回None
-        """
+        """Extract service ID from request path, supporting both ID and slug_name."""
         service_identifier = request.path_params.get("service_id")
         if not service_identifier:
             return None
@@ -138,16 +118,7 @@ class McpController:
                 db.close()
 
     def _extract_user_id(self, request: Request) -> Optional[str]:
-        """
-        从请求中提取user_id（用于计费）
-        通过URL参数中的apikey查询user_apikey表获取用户ID
-
-        Args:
-            request: Starlette请求对象
-
-        Returns:
-            Optional[str]: 用户ID，如果不存在则返回None
-        """
+        """Extract user ID from request by validating apikey parameter."""
         # 从URL查询参数中获取apikey
         apikey = request.query_params.get("apikey")
         if not apikey:
@@ -193,5 +164,5 @@ class McpController:
                 db.close()
 
     def get_sse_mount_handler(self):
-        """获取SSE消息处理器"""
+        """Get SSE message handler for processing requests."""
         return self.sse.handle_post_message

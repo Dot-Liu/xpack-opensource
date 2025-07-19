@@ -14,12 +14,7 @@ router = APIRouter()
 
 @router.get("/platform")
 async def get_platform_overview(db: Session = Depends(get_db)):
-    """
-    获取平台概览数据
-
-    Returns:
-        dict: 包含平台概览数据的响应
-    """
+    """Get platform overview statistics and metrics."""
     try:
         # 获取总用户数（非管理员且未删除）
         total_user = db.query(User).filter(User.role_id != 1, User.is_deleted == 0).count()  # 非管理员 (role_id 1 是管理员)  # 未删除

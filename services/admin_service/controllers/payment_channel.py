@@ -19,6 +19,7 @@ async def payment_channel_list(
     page_size: int = Query(15, description="当前页面数据条数"),
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
 ):
+    """Get paginated list of payment channels."""
     total, list = payment_channel_service.list()
     if total == 0:
         return ResponseUtils.success_page(data=[],total=0,page_num=page,page_size=page_size)
@@ -43,6 +44,7 @@ async def payment_channel_enable(
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
     body: dict = Body(..., description="支付渠道配置"),
     ):
+    """Enable a payment channel by ID."""
     id = body.get("id")
     if not id:
         return ResponseUtils.error("支付渠道id不能为空")
@@ -62,6 +64,7 @@ async def payment_channel_disable(
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
     body: dict = Body(..., description="支付渠道配置"),
     ):
+    """Disable a payment channel by ID."""
     id = body.get("id")
     if not id:
         return ResponseUtils.error("支付渠道id不能为空")
@@ -81,6 +84,7 @@ async def payment_channel_config(
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
     body: dict = Body(..., description="支付渠道配置"),
     ):
+    """Update payment channel configuration."""
     id = body.get("id")
     if not id:
         return ResponseUtils.error("支付渠道id不能为空")

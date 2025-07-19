@@ -24,7 +24,7 @@ router = APIRouter()
 
 @router.get("/config", summary="获取配置信息（无需登录）", tags=["common"])
 def get_config(db: Session = Depends(get_db)):
-    """获取公共配置信息，无需登录即可访问"""
+    """Get platform configuration settings without authentication."""
     try:
         # 创建服务实例
         sys_config_service = SysConfigService(db)

@@ -31,17 +31,7 @@ class CreatePaymentLinkRequest(BaseModel):
 
 @router.post("/create_payment_link", response_model=dict)
 def create_payment_link(request: Request, body: CreatePaymentLinkRequest, payment: PaymentService = Depends(get_payment)):
-    """
-    Create a Stripe payment link for the user.
-
-    Args:
-        request (Request): The incoming request object containing user context.
-        body (CreatePaymentLinkRequest): 请求体，包含金额和币种
-        db (Session, optional): Database session dependency.
-
-    Returns:
-        Response: Success response with payment link if created, otherwise error response.
-    """
+    """Create Stripe payment link for the user."""
     user = request.scope.get("user")
     if not user:
         return ResponseUtils.error(message="User not found", code=404)
@@ -56,6 +46,7 @@ def create_payment_link(request: Request, body: CreatePaymentLinkRequest, paymen
 
 @router.post("/callback_stripe", response_model=dict)
 async def callback_stripe(request: Request, payment: PaymentService = Depends(get_payment)):
+    """Handle Stripe payment webhook callback."""
     payload = (await request.body()).decode("utf-8")
     sig_header = request.headers.get("Stripe-Signature") or ""
     result = payment.stripe_payment_callback(payload, sig_header)
@@ -70,6 +61,7 @@ async def order_status(
     payment_id: str,
     get_user_wallet_history: UserWalletHistoryService = Depends(get_user_wallet_history),
 ):
+    """Check payment order completion status."""
     if get_user_wallet_history.check_order_complete(payment_id):
         return ResponseUtils.success({"status": 1})
     return ResponseUtils.success({"status": 0})

@@ -23,7 +23,7 @@ def get_public_mcp_services(
     page_size: Optional[int] = Query(10, description="分页大小，不传默认10。"),
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
 ):
-    """获取公开MCP服务列表，支持关键字搜索和分页"""
+    """Get paginated list of public MCP services with keyword search."""
     try:
         # 如果没有传keyword，使用空字符串
         if keyword is None:
@@ -50,7 +50,7 @@ def get_public_mcp_service_info(
     id: str = Query(..., description="服务ID"),
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
 ):
-    """获取公开MCP服务的详细信息"""
+    """Get detailed information of a public MCP service by ID."""
     try:
         # 参数验证
         if not id:

@@ -21,6 +21,7 @@ def get_user_order_list(
     user_service: UserService = Depends(get_user_service),
     user_wallet_history_service: UserWalletHistoryService = Depends(get_user_wallet_history_service),
     ):
+    """Get paginated list of user order history."""
     offset = (page - 1) * page_size
     total,orders = user_wallet_history_service.success_order_list(offset,page_size)
     if not orders:

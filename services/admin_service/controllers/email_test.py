@@ -13,12 +13,7 @@ def send_template_email(
     body: dict = Body(...),
     db: Session = Depends(get_db),
 ):
-    """
-    测试发送模板邮件
-    :param body: 包含邮箱地址和验证码的请求体 {"email": "test@example.com", "code": "123456"}
-    :param db: 数据库会话
-    :return: 发送结果
-    """
+    """Send test template email with verification code."""
     try:
         email = body.get("email")
         code = body.get("code", "123456")  # 默认验证码
