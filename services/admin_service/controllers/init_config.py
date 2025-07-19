@@ -12,6 +12,7 @@ from services.admin_service.constants.sys_config_key import (
     KEY_WEBSITE_TITLE,
     KEY_HEADLINE,
     KEY_SUBHEADLINE,
+    KEY_LANGUAGE,
     KEY_LOGIN_GOOGLE_CLIENT,
     KEY_LOGIN_GOOGLE_ENABLE,
 )
@@ -34,6 +35,7 @@ def get_config(db: Session = Depends(get_db)):
         website_title = sys_config_service.get_value_by_key(KEY_WEBSITE_TITLE) or ""
         headline = sys_config_service.get_value_by_key(KEY_HEADLINE) or ""
         subheadline = sys_config_service.get_value_by_key(KEY_SUBHEADLINE) or ""
+        language = sys_config_service.get_value_by_key(KEY_LANGUAGE) or ""
 
         # 获取登录配置
         google_client_id = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_CLIENT) or ""
@@ -48,6 +50,7 @@ def get_config(db: Session = Depends(get_db)):
                 "website_title": website_title,
                 "headline": headline,
                 "subheadline": subheadline,
+                "language": language,
             },
         }
 

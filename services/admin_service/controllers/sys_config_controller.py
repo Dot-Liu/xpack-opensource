@@ -32,6 +32,7 @@ def get_sysconfig(
     website_title = sysconfig_service.get_value_by_key(sys_config_key.KEY_WEBSITE_TITLE)
     headline = sysconfig_service.get_value_by_key(sys_config_key.KEY_HEADLINE)
     subheadline = sysconfig_service.get_value_by_key(sys_config_key.KEY_SUBHEADLINE)
+    language = sysconfig_service.get_value_by_key(sys_config_key.KEY_LANGUAGE)
     admin_username = ""
     if admin_user and admin_user.name:
         admin_username = admin_user.name
@@ -59,6 +60,7 @@ def get_sysconfig(
                 "website_title": website_title,
                 "headline": headline,
                 "subheadline": subheadline,
+                "language": language,
             },
             "account": {
                 "username": admin_username,
@@ -94,6 +96,7 @@ def set_sysconfig(
         website_title = ""
         headline = ""
         subheadline = ""
+        language = ""
         admin_username = ""
         admin_password = ""
         login_google_client = ""
@@ -113,6 +116,7 @@ def set_sysconfig(
         website_title = platform.get("website_title")
         headline = platform.get("headline")
         subheadline = platform.get("subheadline")
+        language = platform.get("language")
 
         account = body.get("account", {})
         admin_username = account.get("username")
@@ -144,6 +148,7 @@ def set_sysconfig(
             (sys_config_key.KEY_WEBSITE_TITLE, website_title, "网站标题"),
             (sys_config_key.KEY_HEADLINE, headline, "首页标题"),
             (sys_config_key.KEY_SUBHEADLINE, subheadline, "副标题"),
+            (sys_config_key.KEY_LANGUAGE, language, "语言"),
             (sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, login_google_client, "谷歌登录客户端ID"),
             (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "谷歌登录客户端密钥"),
             (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "谷歌登录是否启用"),
