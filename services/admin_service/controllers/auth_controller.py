@@ -53,14 +53,16 @@ def account_login(body: dict = Body(...), auth_service: AuthService = Depends(ge
 def google_login(request: Request, body: dict = Body(...), auth_service: AuthService = Depends(get_auth_service)):
     code = body.get("code")
     state = body.get("state")
-    base_url = f"{request.url.scheme}://{request.url.netloc}"
+    redirect_uri = body.get("redirect_uri")
+    if not redirect_uri:
+        return ResponseUtils.error(message="redirect_uri not found", code=400)
     if not code or not state:
         return ResponseUtils.error(message="code and state required", code=400)
-    token = auth_service.google_login(base_url, code, state)
+    token = auth_service.google_login(redirect_uri, code, state)
     if token:
         return ResponseUtils.success({"user_token": token})
     else:
-        return ResponseUtils.error(message=f"login failed: {base_url}", code=401)
+        return ResponseUtils.error(message=f"login failed: {redirect_uri}", code=401)
 
 
 @router.delete("/logout", response_model=dict)
