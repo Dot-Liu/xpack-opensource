@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.openapi_manager import openapi_manager
-from services.admin_service.services.mcp_manager_service import McpManagerService
+from services.admin_service.services.mcp_manager_service import McpManagerService, parse_tags_to_array
 from services.common.utils.cache_utils import CacheUtils
 from services.common.redis_keys import RedisKeys
 from services.admin_service.utils.user_utils import UserUtils
@@ -197,7 +197,7 @@ def get_mcp_service_list(
                 "charge_type": service.charge_type.value if service.charge_type else None,
                 "price": float(service.price) if service.price else 0.0,
                 "enabled": service.enabled,
-                "tags": service.tags.split(',') if service.tags else [],
+                "tags": parse_tags_to_array(service.tags),
                 "created_at": str(service.created_at) if service.created_at else None,
                 "updated_at": str(service.updated_at) if service.updated_at else None,
             }

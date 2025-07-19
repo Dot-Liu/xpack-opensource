@@ -18,6 +18,13 @@ class Config:
     DEBUG = os.getenv("DEBUG", "true").lower() == "true"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
+    # 数据库连接池配置
+    DB_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", 20))  # 连接池大小
+    DB_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", 30))  # 最大溢出连接数
+    DB_POOL_TIMEOUT = int(os.getenv("DB_POOL_TIMEOUT", 30))  # 获取连接超时时间(秒)
+    DB_POOL_RECYCLE = int(os.getenv("DB_POOL_RECYCLE", 3600))  # 连接回收时间(秒)
+    DB_POOL_PRE_PING = os.getenv("DB_POOL_PRE_PING", "true").lower() == "true"  # 连接前检测
+
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.example.com")
     SMTP_PORT = int(os.getenv("SMTP_PORT", 465))
     SMTP_USER = os.getenv("SMTP_USER", "your_email@example.com")

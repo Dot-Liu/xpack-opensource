@@ -35,6 +35,25 @@ def parse_tags_to_array(tags_str: Optional[str]) -> list[str]:
     return tags
 
 
+# 工具函数：将tags数组转换为字符串
+def parse_tags_to_string(tags_array: Optional[list]) -> str:
+    """
+    将tags数组转换为字符串
+    
+    Args:
+        tags_array: tags数组
+        
+    Returns:
+        str: tags字符串，用半角逗号分隔
+    """
+    if not tags_array or not isinstance(tags_array, list):
+        return ""
+    
+    # 过滤空字符串，去除空白字符，用逗号连接
+    tags = [str(tag).strip() for tag in tags_array if str(tag).strip()]
+    return ','.join(tags)
+
+
 def normalize_slug_name(text: str) -> str:
     """将文本转换为适合作为slug的英文字符串"""
     # 移除非英文字符，只保留字母、数字、空格、横线、下划线
@@ -174,7 +193,12 @@ class McpManagerService:
         if "price" in body and body["price"] is not None:
             existing_service.price = body["price"]
         if "tags" in body and body["tags"] is not None:
-            existing_service.tags = body["tags"]
+            # 如果传入的是数组，转换为字符串存储
+            if isinstance(body["tags"], list):
+                existing_service.tags = parse_tags_to_string(body["tags"])
+            else:
+                # 如果传入的是字符串，直接存储
+                existing_service.tags = body["tags"]
 
         # 提交更改
         self.db.commit()
