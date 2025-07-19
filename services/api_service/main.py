@@ -61,6 +61,7 @@ def read_root():
         "version": "1.0.0",
         "protocol": "MCP Streamable HTTP",
         "endpoints": ["/mcp/sse/{service_id}", "/mcp/messages/", "/mcp/status/{service_id}"],
+        "service_id_support": "Supports both service ID and slug_name",
         "reconnect_info": "Service supports automatic reconnection after restart"
     }
 
@@ -74,12 +75,50 @@ def mcp_service_status(service_id: str):
     """
     检查指定MCP服务的状态
     MCP客户端可以使用此端点检查服务是否可用，用于重连判断
+    支持service_id（UUID）和slug_name两种模式
     """
+    # 解析service_id，支持ID和slug_name两种模式
+    actual_service_id = None
+    service_name = "unknown"
+    
+    try:
+        from services.api_service.repositories.mcp_service_repository import McpServiceRepository
+        from services.common.database import get_db
+        
+        db = next(get_db())
+        service_repository = McpServiceRepository(db)
+        
+        # 首先尝试按ID查找
+        service = service_repository.get_by_id(service_id)
+        if service:
+            actual_service_id = service.id
+            service_name = service.name
+        else:
+            # 如果按ID未找到，尝试按slug_name查找
+            service = service_repository.get_by_slug_name(service_id)
+            if service:
+                actual_service_id = service.id
+                service_name = service.name
+                
+        db.close()
+        
+    except Exception as e:
+        logger.error(f"查询服务状态时发生错误: {str(e)}")
+    
+    if not actual_service_id:
+        return {
+            "service_id": service_id,
+            "status": "not_found",
+            "error": "Service not found or not available"
+        }
+    
     # 获取该服务的连接统计
-    service_connections = connection_manager.get_service_connections(service_id)
+    service_connections = connection_manager.get_service_connections(actual_service_id)
     
     return {
-        "service_id": service_id,
+        "service_id": actual_service_id,
+        "service_identifier": service_id,
+        "service_name": service_name,
         "status": "available",
         "protocol": "streamable-http",
         "endpoint": f"/mcp/sse/{service_id}",

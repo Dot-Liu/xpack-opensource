@@ -1,5 +1,6 @@
 """
 MCP控制器 - 专门处理MCP Streamable HTTP协议的SSE连接和消息
+支持service_id（UUID）和slug_name两种服务标识符模式
 """
 
 from typing import Optional
@@ -41,11 +42,11 @@ class McpController:
         service_id = None
         
         try:
-            # 从URL路径中提取service_id
+            # 从URL路径中提取service_id (支持ID和slug_name两种模式)
             service_id = self._extract_service_id(request)
             if not service_id:
-                logger.error("缺少service_id参数")
-                return Response("Missing service_id parameter", status_code=400)
+                logger.error("缺少service_id参数或未找到对应服务")
+                return Response("Missing service_id parameter or service not found", status_code=400)
 
             logger.info(f"收到SSE连接请求 - 服务ID: {service_id}, 客户端: {client_ip}, UA: {user_agent[:50]}...")
 
@@ -91,7 +92,9 @@ class McpController:
 
     def _extract_service_id(self, request: Request) -> Optional[str]:
         """
-        从请求中提取service_id
+        从请求中提取service_id，支持ID和slug_name两种模式
+        
+        如果传入的是slug_name，会查询数据库获取对应的服务ID
 
         Args:
             request: Starlette请求对象
@@ -99,7 +102,40 @@ class McpController:
         Returns:
             Optional[str]: 服务ID，如果不存在则返回None
         """
-        return request.path_params.get("service_id")
+        service_identifier = request.path_params.get("service_id")
+        if not service_identifier:
+            return None
+            
+        # 尝试通过service_identifier查找服务，支持ID和slug_name两种模式
+        db = None
+        try:
+            from services.api_service.repositories.mcp_service_repository import McpServiceRepository
+            from services.common.database import get_db
+            
+            db = next(get_db())
+            service_repository = McpServiceRepository(db)
+            
+            # 首先尝试按ID查找
+            service = service_repository.get_by_id(service_identifier)
+            if service:
+                logger.debug(f"找到服务 (按ID): {service.name} ({service.id})")
+                return service.id
+            
+            # 如果按ID未找到，尝试按slug_name查找
+            service = service_repository.get_by_slug_name(service_identifier)
+            if service:
+                logger.debug(f"找到服务 (按slug_name): {service.name} ({service.id})")
+                return service.id
+                
+            logger.warning(f"未找到服务: {service_identifier}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"查询服务时发生错误: {str(e)}", exc_info=True)
+            return None
+        finally:
+            if db is not None:
+                db.close()
 
     def _extract_user_id(self, request: Request) -> Optional[str]:
         """
