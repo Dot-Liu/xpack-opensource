@@ -260,4 +260,7 @@ CREATE TABLE `mcp_call_log` (
   FOREIGN KEY (`wallet_history_id`) REFERENCES `user_wallet_history` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Stores API call logs';
 
+INSERT INTO user (id, name, email, password, is_active, is_deleted, register_type, role_id, created_at, updated_at) VALUES ('admin', 'admin', 'admin@xpack.com', '25f9e794323b453885f5181f1b624d0b', 1, 0, 'email', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO `user_wallet` (`id`, `user_id`, `balance`, `frozen_balance`, `created_at`, `updated_at`) VALUES (UUID(), 'admin', 0.00, 0.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
 SET FOREIGN_KEY_CHECKS = 1;
