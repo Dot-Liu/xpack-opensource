@@ -10,7 +10,7 @@ load_dotenv()
 class Config:
     DATABASE_URL = os.getenv("DATABASE_URL", "mysql+mysqlconnector://root:123456@172.31.126.12:3306/xpack-opensource")
     SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
-    API_PORT = int(os.getenv("API_PORT", 8000))
+    API_PORT = int(os.getenv("API_PORT", 8002))
     ADMIN_PORT = int(os.getenv("ADMIN_PORT", 8001))
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
     DEBUG = os.getenv("DEBUG", "true").lower() == "true"

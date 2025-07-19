@@ -51,7 +51,7 @@ class McpServerFactory:
 
         # 注册工具调用处理器
         @app.call_tool()
-        async def call_tool(name: str, arguments: dict) -> List[types.ContentBlock]:
+        async def call_tool(name: str, arguments: dict) -> List[types.Content]:
             """执行指定的工具"""
             # user_id 必须存在，否则不应该到达这里
             if not user_id:
@@ -96,7 +96,7 @@ class McpServerFactory:
         finally:
             db.close()
 
-    async def _handle_call_tool_with_billing(self, service_id: str, name: str, arguments: dict, user_id: str) -> List[types.ContentBlock]:
+    async def _handle_call_tool_with_billing(self, service_id: str, name: str, arguments: dict, user_id: str) -> List[types.Content]:
         """
         带计费逻辑的工具调用处理
 
@@ -107,7 +107,7 @@ class McpServerFactory:
             user_id: 用户ID
 
         Returns:
-            List[types.ContentBlock]: 执行结果
+            List[types.Content]: 执行结果
         """
         call_start_time = datetime.now(timezone.utc)
         call_log_id = str(uuid.uuid4())

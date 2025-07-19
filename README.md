@@ -43,8 +43,11 @@
 ## 启动方式
 
 ```shell
-# 启动 admin 服务
+# 启动 admin 服务 (管理后台)
 uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --reload
+
+# 启动 api 服务 (MCP服务接口)
+uvicorn services.api_service.main:app --host 0.0.0.0 --port 8002 --reload
 ```
 
 ## 模块说明

@@ -17,7 +17,7 @@ class McpToolService:
     def __init__(self):
         self.http_builder = HttpRequestBuilder()
     
-    async def execute_tool(self, tool_config, arguments: dict, auth_info: dict) -> List[types.ContentBlock]:
+    async def execute_tool(self, tool_config, arguments: dict, auth_info: dict) -> List[types.Content]:
         """
         执行工具调用
         
@@ -27,7 +27,7 @@ class McpToolService:
             auth_info: 服务认证信息
             
         Returns:
-            List[types.ContentBlock]: 执行结果
+            List[types.Content]: 执行结果
         """
         try:
             logger.info(f"开始执行工具: {tool_config.name}")
