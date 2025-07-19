@@ -37,4 +37,29 @@ class Config:
 
     PAY_SUCCESS_URL = os.getenv("PAY_SUCCESS_URL", "http://localhost:3000/payment/pay_success")
 
+    # 无需认证的路径配置
+    # 可通过环境变量NO_AUTH_PATHS覆盖，使用逗号分隔
+    _default_no_auth_paths = [
+        "/",
+        "/health",
+        "/docs",
+        "/openapi.json",
+        "/redoc",
+        "/api/auth/email/send-captcha",
+        "/api/auth/email/sign",
+        "/api/common/config",
+        "/api/auth/account/sign",
+        "/api/auth/email/send_captcha",
+        "/api/auth/google/sign",
+        "/api/web/mcp_services",
+        "/api/web/mcp_service_info",
+        "/api/payment/callback_stripe",
+    ]
+
+    # 支持通过环境变量自定义无需认证的路径
+    _env_no_auth_paths = os.getenv("NO_AUTH_PATHS", "")
+    NO_AUTH_PATHS = (
+        [path.strip() for path in _env_no_auth_paths.split(",") if path.strip()] if _env_no_auth_paths else _default_no_auth_paths
+    )
+
     print(f"redis config loaded, host: {REDIS_HOST}, password: {REDIS_PASSWORD}")

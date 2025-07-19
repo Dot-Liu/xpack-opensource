@@ -13,7 +13,7 @@ import time
 
 from services.common.config import Config
 from services.common.logging_config import setup_logging, get_logger
-from services.api_service.controllers.mcp_controller import McpController
+from services.api_service.controllers.mcp import McpController
 from services.api_service.utils.connection_manager import connection_manager
 
 # Setup logging for api service
@@ -51,7 +51,7 @@ app.add_middleware(
 )
 
 # 创建MCP控制器实例
-mcp_controller = McpController()
+mcp = McpController()
 
 # 健康检查端点
 @app.get("/")
@@ -143,8 +143,8 @@ def mcp_connections_stats():
 # 创建MCP Streamable HTTP路由
 # 使用Starlette子应用处理MCP协议的底层SSE连接
 mcp_routes = [
-    Route("/{service_id}", endpoint=mcp_controller.handle_sse_connection, methods=["GET"]),
-    Mount("/messages/", app=mcp_controller.get_sse_mount_handler()),
+    Route("/{service_id}", endpoint=mcp.handle_sse_connection, methods=["GET"]),
+    Mount("/messages/", app=mcp.get_sse_mount_handler()),
 ]
 
 mcp_app = Starlette(routes=mcp_routes)

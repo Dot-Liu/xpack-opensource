@@ -7,19 +7,19 @@ from contextlib import asynccontextmanager
 
 from services.common.config import Config
 from services.common.logging_config import setup_logging, get_logger
-from services.admin_service.controllers import user_contoller
-from services.admin_service.controllers import auth_controller
-from services.admin_service.controllers import user_apikey_controller
-from services.admin_service.controllers import payment_controller
-from services.admin_service.controllers import order_controller
+from services.admin_service.controllers import user
+from services.admin_service.controllers import auth
+from services.admin_service.controllers import user_apikey
+from services.admin_service.controllers import payment
+from services.admin_service.controllers import order
 from services.admin_service.controllers import user_manager
 from services.admin_service.controllers import mcp_manager
-from services.admin_service.controllers import sys_config_controller
-from services.admin_service.controllers import payment_channel_controller
+from services.admin_service.controllers import sys_config
+from services.admin_service.controllers import payment_channel
 from services.admin_service.controllers import init_config
-from services.admin_service.controllers import web_controller
+from services.admin_service.controllers import web
 from services.admin_service.controllers import stats_data
-from services.admin_service.controllers import email_test_controller
+from services.admin_service.controllers import email_test
 from services.admin_service.consumers.billing_message_consumer import BillingMessageConsumer
 from services.admin_service.middleware import AuthMiddleware
 
@@ -85,19 +85,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(user_contoller.router, prefix="/api/user")
-app.include_router(auth_controller.router, prefix="/api/auth")
-app.include_router(user_apikey_controller.router, prefix="/api/apikey")
+app.include_router(user.router, prefix="/api/user")
+app.include_router(auth.router, prefix="/api/auth")
+app.include_router(user_apikey.router, prefix="/api/apikey")
 app.include_router(user_manager.router, prefix="/api/user_manager")
-app.include_router(payment_controller.router, prefix="/api/payment")
+app.include_router(payment.router, prefix="/api/payment")
 app.include_router(mcp_manager.router, prefix="/api/mcp")
-app.include_router(order_controller.router, prefix="/api/order")
-app.include_router(sys_config_controller.router, prefix="/api/sysconfig")
-app.include_router(payment_channel_controller.router, prefix="/api/payment_channel")
+app.include_router(order.router, prefix="/api/order")
+app.include_router(sys_config.router, prefix="/api/sysconfig")
+app.include_router(payment_channel.router, prefix="/api/payment_channel")
 app.include_router(init_config.router, prefix="/api/common")
-app.include_router(web_controller.router, prefix="/api/web")
+app.include_router(web.router, prefix="/api/web")
 app.include_router(stats_data.router, prefix="/api/overview")
-app.include_router(email_test_controller.router, prefix="/api/email_test")
+app.include_router(email_test.router, prefix="/api/email_test")
 
 # Logging is already configured by setup_logging("admin_service")
 

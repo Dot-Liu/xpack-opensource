@@ -6,7 +6,7 @@
 
 ## 修改的文件
 
-### 1. `services/api_service/controllers/mcp_controller.py`
+### 1. `services/api_service/controllers/mcp.py`
 
 #### 修改内容：
 - **文件头注释**: 添加了支持两种模式的说明
