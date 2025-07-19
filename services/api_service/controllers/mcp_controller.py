@@ -1,5 +1,5 @@
 """
-MCP控制器 - 处理MCP相关的HTTP请求和SSE连接
+MCP控制器 - 专门处理MCP Streamable HTTP协议的SSE连接和消息
 """
 
 from typing import Optional
@@ -10,13 +10,14 @@ from mcp.server.sse import SseServerTransport
 from services.api_service.services.mcp_server_factory import McpServerFactory
 from services.api_service.utils.logging_config import get_logger
 from services.api_service.repositories.user_apikey_repository import UserApiKeyRepository
+from services.api_service.utils.connection_manager import connection_manager
 from services.common.database import get_db
 
 logger = get_logger(__name__)
 
 
 class McpController:
-    """MCP控制器类"""
+    """MCP Streamable HTTP控制器类 - 处理SSE连接和消息路由"""
 
     def __init__(self):
         self.sse = SseServerTransport("/messages/")
@@ -24,7 +25,9 @@ class McpController:
 
     async def handle_sse_connection(self, request: Request) -> Response:
         """
-        处理SSE连接请求
+        处理MCP Streamable HTTP的SSE连接请求
+        
+        支持连接恢复机制，当服务重启后客户端可以重新连接
 
         Args:
             request: Starlette请求对象
@@ -32,6 +35,11 @@ class McpController:
         Returns:
             Response: HTTP响应
         """
+        # 获取连接标识信息
+        client_ip = request.client.host if request.client else "unknown"
+        user_agent = request.headers.get("user-agent", "unknown")
+        service_id = None
+        
         try:
             # 从URL路径中提取service_id
             service_id = self._extract_service_id(request)
@@ -39,7 +47,7 @@ class McpController:
                 logger.error("缺少service_id参数")
                 return Response("Missing service_id parameter", status_code=400)
 
-            logger.info(f"收到SSE连接请求 - 服务ID: {service_id}")
+            logger.info(f"收到SSE连接请求 - 服务ID: {service_id}, 客户端: {client_ip}, UA: {user_agent[:50]}...")
 
             # 提取用户ID（用于计费）- 必须提供有效的 apikey
             user_id = self._extract_user_id(request)
@@ -50,23 +58,35 @@ class McpController:
             # 创建MCP服务器实例（传入用户ID用于计费）
             mcp_server = await self.server_factory.create_server(service_id, user_id)
 
+            # 注册连接到管理器
+            connection_key = connection_manager.register_connection(service_id, user_id, client_ip)
+
             # 建立SSE连接并运行MCP服务器
             async with self.sse.connect_sse(request.scope, request.receive, request._send) as streams:
-                logger.info(f"SSE连接已建立 - 服务ID: {service_id}")
+                logger.info(f"SSE连接已建立 - 服务ID: {service_id}, 用户ID: {user_id}, 客户端: {client_ip}")
 
                 # 配置服务器初始化选项
                 init_options = mcp_server.create_initialization_options()
                 init_options.server_name = f"mcp-service-{service_id}"
+                
+                # 增加连接恢复提示信息
                 logger.info(f"服务器名称设置为: {init_options.server_name}")
+                logger.info(f"MCP服务器启动完成，等待客户端消息... (连接标识: {connection_key})")
 
                 # 运行MCP服务器
                 await mcp_server.run(streams[0], streams[1], init_options)
-                logger.info(f"MCP服务器运行结束 - 服务ID: {service_id}")
+                logger.info(f"MCP服务器运行结束 - 服务ID: {service_id}, 用户ID: {user_id}")
+
+            # 注销连接
+            connection_manager.unregister_connection(connection_key)
 
             return Response()
 
+        except ConnectionError as e:
+            logger.warning(f"连接错误 - 服务ID: {service_id or 'unknown'}, 客户端: {client_ip}: {str(e)}")
+            return Response("Connection error", status_code=503)
         except Exception as e:
-            logger.error(f"SSE连接处理失败: {str(e)}", exc_info=True)
+            logger.error(f"SSE连接处理失败 - 服务ID: {service_id or 'unknown'}, 客户端: {client_ip}: {str(e)}", exc_info=True)
             return Response(f"Internal server error: {str(e)}", status_code=500)
 
     def _extract_service_id(self, request: Request) -> Optional[str]:
