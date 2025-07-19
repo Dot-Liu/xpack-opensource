@@ -17,6 +17,7 @@ from services.admin_service.controllers import sys_config_controller
 from services.admin_service.controllers import payment_channel_controller
 from services.admin_service.controllers import init_config
 from services.admin_service.controllers import web_controller
+from services.admin_service.controllers import stats_data
 from services.admin_service.consumers.billing_message_consumer import BillingMessageConsumer
 from services.admin_service.middleware import AuthMiddleware
 
@@ -91,6 +92,7 @@ app.include_router(sys_config_controller.router, prefix="/api/sysconfig")
 app.include_router(payment_channel_controller.router, prefix="/api/payment_channel")
 app.include_router(init_config.router, prefix="/api/common")
 app.include_router(web_controller.router, prefix="/api/web")
+app.include_router(stats_data.router, prefix="/api/overview")
 
 logging.basicConfig(level=logging.DEBUG)
 
