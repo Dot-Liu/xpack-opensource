@@ -9,16 +9,12 @@ from services.admin_service.constants import sys_config_key
 router = APIRouter()
 
 
-
-
 def get_sysconfig_service(db: Session = Depends(get_db)) -> SysConfigService:
     return SysConfigService(db)
 
 
 @router.get("/info")
-def get_sysconfig(
-    sysconfig_service: SysConfigService = Depends(get_sysconfig_service)
-    ):
+def get_sysconfig(sysconfig_service: SysConfigService = Depends(get_sysconfig_service)):
     platform_name = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_NAME)
     platform_logo = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_LOGO)
     admin_username = sysconfig_service.get_value_by_key(sys_config_key.KEY_ADMIN_USERNAME)
@@ -29,47 +25,49 @@ def get_sysconfig(
         login_google_enable = False
     else:
         login_google_enable = bool(login_google_enable)
-    return ResponseUtils.success(data={
-        "platform": {
-            "name": platform_name,
-            "logo": platform_logo,
-        },
-        "account":{
-            "username": admin_username,
-        },
-        "login":{
-            "google":{
-                "client_id": login_google_client,
-                "client_secret": login_google_secret,
-                "is_enabled": login_google_enable,
-            }
-        },
-    })
+    return ResponseUtils.success(
+        data={
+            "platform": {
+                "name": platform_name,
+                "logo": platform_logo,
+            },
+            "account": {
+                "username": admin_username,
+            },
+            "login": {
+                "google": {
+                    "client_id": login_google_client,
+                    "client_secret": login_google_secret,
+                    "is_enabled": login_google_enable,
+                }
+            },
+        }
+    )
+
 
 @router.put("/info")
 def set_sysconfig(
     sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
     body: dict = Body(...),
-    ):
+):
     try:
-        platform_name=""
-        platform_logo=""
-        admin_username=""
-        admin_password=""
-        login_google_client=""
-        login_google_secret=""
-        login_google_enable=""
-        
+        platform_name = ""
+        platform_logo = ""
+        admin_username = ""
+        admin_password = ""
+        login_google_client = ""
+        login_google_secret = ""
+        login_google_enable = ""
 
         # 使用 get 方法安全地获取嵌套值
         platform = body.get("platform", {})
         platform_name = platform.get("name")
         platform_logo = platform.get("logo")
-        
+
         account = body.get("account", {})
         admin_username = account.get("username")
         admin_password = account.get("password")
-        
+
         login = body.get("login", {})
         google_config = login.get("google", {})
         login_google_client = google_config.get("client_id")
@@ -80,7 +78,7 @@ def set_sysconfig(
             login_google_enable = "False"
         else:
             login_google_enable = "True"
-        # 批量更新配置 
+        # 批量更新配置
         configs = [
             (sys_config_key.KEY_PLATFORM_NAME, platform_name, "平台名称"),
             (sys_config_key.KEY_PLATFORM_LOGO, platform_logo, "平台logo"),
@@ -99,6 +97,7 @@ def set_sysconfig(
 
     except Exception as e:
         return ResponseUtils.error(f"更新系统配置失败：{str(e)}")
-    
+
+
 def str_to_bool(s):
     return s.lower() in ("true", "t", "yes", "y", "1")
