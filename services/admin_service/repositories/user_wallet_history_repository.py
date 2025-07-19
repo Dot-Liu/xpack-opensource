@@ -97,3 +97,23 @@ class UserWalletHistoryRepository:
         :return: UserWalletHistory对象或None
         """
         return self.db.query(UserWalletHistory).filter(UserWalletHistory.id == history_id).first()
+
+    def add_consume_record(self, wallet_history: UserWalletHistory) -> Optional[UserWalletHistory]:
+        """
+        添加消费记录
+        
+        Args:
+            wallet_history: 钱包历史记录对象
+            
+        Returns:
+            Optional[UserWalletHistory]: 创建的记录，失败返回None
+        """
+        try:
+            self.db.add(wallet_history)
+            self.db.commit()
+            self.db.refresh(wallet_history)
+            return wallet_history
+        except Exception as e:
+            self.logging.error(f"添加消费记录失败: {str(e)}")
+            self.db.rollback()
+            return None

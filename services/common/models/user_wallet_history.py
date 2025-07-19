@@ -16,6 +16,7 @@ class TransactionType(PyEnum):
     DEPOSIT = "deposit"
     CONSUME = "consume"
     REFUND = "refund"
+    API_CALL = "api_call"  # 新增：API调用消费
 
 
 class UserWalletHistory(Base):

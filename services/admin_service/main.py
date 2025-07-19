@@ -1,5 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import asyncio
+import threading
+import logging
+from contextlib import asynccontextmanager
+
 from services.common.config import Config
 from services.admin_service.controllers import user_contoller
 from services.admin_service.controllers import auth_controller
@@ -12,11 +17,57 @@ from services.admin_service.controllers import sys_config_controller
 from services.admin_service.controllers import payment_channel_controller
 from services.admin_service.controllers import init_config
 from services.admin_service.controllers import web_controller
-
+from services.admin_service.consumers.billing_message_consumer import BillingMessageConsumer
 from services.admin_service.middleware import AuthMiddleware
-import logging
 
-app = FastAPI(title="Admin Service", openapi_url="/openapi.json")
+logger = logging.getLogger(__name__)
+
+# 全局消费者实例
+consumer_instance = None
+consumer_thread = None
+
+
+def start_billing_consumer():
+    """在后台线程中启动计费消费者"""
+    global consumer_instance
+    try:
+        logger.info("正在启动计费消息消费者...")
+        consumer_instance = BillingMessageConsumer()
+        consumer_instance.start_consuming()
+    except Exception as e:
+        logger.error(f"计费消费者启动失败: {str(e)}", exc_info=True)
+
+
+def stop_billing_consumer():
+    """停止计费消费者"""
+    global consumer_instance
+    if consumer_instance:
+        logger.info("正在停止计费消息消费者...")
+        consumer_instance.stop_consuming()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    global consumer_thread
+    
+    # 启动时：在单独线程中启动消费者
+    logger.info("Admin Service 启动中...")
+    try:
+        consumer_thread = threading.Thread(target=start_billing_consumer, daemon=True)
+        consumer_thread.start()
+        logger.info("计费消息消费者已在后台启动")
+    except Exception as e:
+        logger.error(f"启动计费消费者失败: {str(e)}")
+    
+    yield
+    
+    # 关闭时：停止消费者
+    logger.info("Admin Service 关闭中...")
+    stop_billing_consumer()
+
+
+app = FastAPI(title="Admin Service", openapi_url="/openapi.json", lifespan=lifespan)
 
 # 添加认证中间件
 app.add_middleware(AuthMiddleware)
