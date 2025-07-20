@@ -1,0 +1,64 @@
+version: '3'
+services:
+  xpack-mysql:
+    image: mysql:8.0.37
+    privileged: true
+    restart: always
+    container_name: xpack-mysql
+    hostname: xpack-mysql
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    ports:
+      - "33306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD={MYSQL_PWD}
+      - MYSQL_DATABASE=xpack
+    volumes:
+      - /var/lib/xpack/mysql:/var/lib/mysql
+    networks:
+      - xpack
+  xpack:
+    image: xpack/xpack
+    container_name: xpack
+    privileged: true
+    restart: always
+    networks:
+      - xpack
+    ports:
+      - "5000:3000"
+    depends_on:
+      - xpack-mysql
+    environment:
+      - MYSQL_USER_NAME=root
+      - MYSQL_PWD={MYSQL_PWD}
+      - MYSQL_IP=xpack-mysql
+      - MYSQL_PORT=3306                 # MySQL port
+      - MYSQL_DB="xpack"
+      - ERROR_DIR=work/logs  # Log directory
+      - REDIS_ADDR=xpack-redis:6379           # Redis cluster address, multiple addresses separated by commas
+      - REDIS_PWD={REDIS_PWD}                         # Redis password
+      - ADMIN_PASSWORD={ADMIN_PASSWORD}
+      - Init=true
+      - InfluxdbToken={INFLUXDB_TOKEN}
+  xpack-redis:
+    container_name: xpack-redis
+    image: redis:7.2.4
+    hostname: xpack-redis
+    privileged: true
+    restart: always
+    ports:
+      - 6379:6379
+    command:
+      - bash
+      - -c
+      - "redis-server --protected-mode yes --logfile redis.log --appendonly no --port 6379 --requirepass {REDIS_PWD}"
+    networks:
+      - xpack
+networks:
+  xpack:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.101.0.0/24

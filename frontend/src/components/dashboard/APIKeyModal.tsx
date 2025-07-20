@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import { APIKey } from "@/shared/types/api";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { fetchAPI } from "@/shared/rpc/common-function";
+import { copyToClipboard } from "@/shared/utils/clipboard";
 
 interface APIKeyModalProps {
   isOpen: boolean;
@@ -97,10 +98,14 @@ export const APIKeyModal = ({
     }
   };
 
-  const handleCopyKey = () => {
+  const handleCopyKey = async () => {
     if (generatedKey) {
-      navigator.clipboard.writeText(generatedKey);
-      toast.success(t("Copied to clipboard"));
+      const result = await copyToClipboard(generatedKey);
+      if (result.success) {
+        toast.success(t("Copied to clipboard"));
+      } else {
+        toast.error(t("Copy failed, please copy manually"));
+      }
     }
   };
 

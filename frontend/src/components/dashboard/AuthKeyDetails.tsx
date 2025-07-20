@@ -21,6 +21,7 @@ import {
 import toast from "react-hot-toast";
 import { fetchAPI } from "@/shared/rpc/common-function";
 import { APIKey } from "@/shared/types/api";
+import { copyToClipboard } from "@/shared/utils/clipboard";
 
 interface AuthKeyDetailsProps {
   selectedApiKey: APIKey | null;
@@ -104,9 +105,13 @@ const AuthKeyDetails: React.FC<AuthKeyDetailsProps> = ({
     fetchAnalyticsData();
   }, [selectedApiKey?.apikey_id]);
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(t("Copied to clipboard"));
+  const handleCopy = async (text: string) => {
+    const result = await copyToClipboard(text);
+    if (result.success) {
+      toast.success(t("Copied to clipboard"));
+    } else {
+      toast.error(t("Copy failed, please copy manually"));
+    }
   };
 
   const getEncryptedKey = (key: string) => {
