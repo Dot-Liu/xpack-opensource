@@ -29,6 +29,10 @@ check_uv_env
 
 echo $VERSION > .version
 
+if [ -f .env.example ]; then
+   cp .env.example .env
+fi
+
 # 初始化数据库
 python ./init_db.py
 
