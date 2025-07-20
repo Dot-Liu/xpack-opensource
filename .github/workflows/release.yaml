@@ -5,9 +5,9 @@ on:
     types:
       - published
 jobs:
-  frontend-builder:
+  release:
     runs-on: ubuntu-latest
-    name:   frontend-builder
+    name:  release
     steps:
       - name: SetOutput
         id: vars
@@ -22,27 +22,6 @@ jobs:
         run: |
           npm install -g pnpm
           ./scripts/frontend_build.sh
-      - name: upload frontend release
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-package
-          path: frontend/out
-          include-hidden-files: true
-  docker-push:
-    runs-on: ubuntu-latest
-    needs: [frontend-builder]
-    name: docker-push
-    steps:
-      - name: SetOutput
-        id: vars
-        run: echo "tag=${GITHUB_REF#refs/*/v}" >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v3
-      - name: download frontend release
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-package
-          path: frontend/out
-          include-hidden-files: true
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login Docker   #登录docker
@@ -56,7 +35,6 @@ jobs:
           version: '2.9.0'
       - name: build
         run: |
-          ls -al frontend/out
           cd scripts && ./docker_build.sh ${{ secrets.DOCKER_USERNAME }}
       - name: publish
         env:
