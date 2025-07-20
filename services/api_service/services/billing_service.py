@@ -103,7 +103,7 @@ class BillingService:
                 unit_price=call_log.unit_price,
                 call_start_time=call_log.call_start_time,
                 call_end_time=call_end_time,
-                apikey=call_log.apikey,
+                apikey_id=call_log.apikey_id,
             )
 
             # 序列化消息
@@ -118,7 +118,7 @@ class BillingService:
                     "unit_price": str(message.unit_price),
                     "call_start_time": message.call_start_time.isoformat(),
                     "call_end_time": message.call_end_time.isoformat() if message.call_end_time else None,
-                    "apikey": message.apikey,
+                    "apikey_id": message.apikey_id,
                 }
             )
 

@@ -246,7 +246,7 @@ CREATE TABLE `mcp_call_log` (
   `process_status` ENUM('pending', 'processed', 'failed') NOT NULL DEFAULT 'pending' COMMENT 'Processing status',
   `error_msg` TEXT DEFAULT NULL COMMENT 'Error message if call failed',
   `wallet_history_id` CHAR(36) DEFAULT NULL COMMENT 'Wallet history UUID',
-  `apikey` VARCHAR(255) NOT NULL COMMENT 'API key used',
+  `apikey_id` CHAR(36) DEFAULT NULL COMMENT 'API key ID',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation timestamp',
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp',
   PRIMARY KEY (`id`),
@@ -254,10 +254,12 @@ CREATE TABLE `mcp_call_log` (
   INDEX `idx_service_id` (`service_id`),
   INDEX `idx_call_start_time` (`call_start_time`),
   INDEX `idx_process_status` (`process_status`),
+  INDEX `idx_apikey_id` (`apikey_id`),
   FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`service_id`) REFERENCES `mcp_service` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`api_id`) REFERENCES `mcp_tool_api` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`wallet_history_id`) REFERENCES `user_wallet_history` (`id`) ON DELETE SET NULL
+  FOREIGN KEY (`wallet_history_id`) REFERENCES `user_wallet_history` (`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`apikey_id`) REFERENCES `user_apikey` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Stores API call logs';
 
 INSERT INTO user (id, name, email, password, is_active, is_deleted, register_type, role_id, created_at, updated_at) VALUES ('admin', 'admin', 'admin@xpack.com', '25f9e794323b453885f5181f1b624d0b', 1, 0, 'email', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

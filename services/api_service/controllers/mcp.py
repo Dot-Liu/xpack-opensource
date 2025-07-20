@@ -43,18 +43,20 @@ class McpController:
             logger.info(f"Received SSE connection request - Service ID: {service_id}, Client: {client_ip}, UA: {user_agent[:50]}...")
 
             # 提取用户ID（用于计费）- 必须提供有效的 apikey
-            user_id = self._extract_user_id(request)
-            if not user_id:
+            user_info = self._extract_user_info(request)
+            if not user_info:
                 logger.error("Missing or invalid apikey, connection rejected")
                 await self._send_error_response(request, 401, "Missing or invalid apikey parameter")
                 return
+
+            user_id, apikey_id = user_info
 
             # 获取 apikey 用于记录日志（提取前10个字符用于审计）
             apikey = request.query_params.get("apikey", "")
             apikey_for_log = apikey[:10] if apikey else None
 
-            # 创建MCP服务器实例（传入用户ID和apikey用于计费和日志记录）
-            mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_for_log)
+            # 创建MCP服务器实例（传入用户ID和apikey_id用于计费和日志记录）
+            mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
 
             # 注册连接到管理器
             connection_key = connection_manager.register_connection(service_id, user_id, client_ip)
@@ -143,8 +145,8 @@ class McpController:
             if db is not None:
                 db.close()
 
-    def _extract_user_id(self, request: Request) -> Optional[str]:
-        """Extract user ID from request by validating apikey parameter."""
+    def _extract_user_info(self, request: Request) -> Optional[tuple[str, str]]:
+        """Extract user ID and apikey ID from request by validating apikey parameter."""
         # 从URL查询参数中获取apikey
         apikey = request.query_params.get("apikey")
         if not apikey:
@@ -165,7 +167,7 @@ class McpController:
                 logger.warning(f"Apikey not found in database: {apikey[:10]}...")
                 return None
             
-            logger.debug(f"Found apikey record - User ID: {user_apikey.user_id}, expiry time: {user_apikey.expire_at}")
+            logger.debug(f"Found apikey record - User ID: {user_apikey.user_id}, API Key ID: {user_apikey.id}, expiry time: {user_apikey.expire_at}")
             
             # 检查apikey是否过期
             if user_apikey.expire_at:
@@ -179,8 +181,8 @@ class McpController:
                     logger.warning(f"Apikey has expired: {apikey[:10]}..., expiry time: {user_apikey.expire_at}")
                     return None
             
-            logger.info(f"Apikey validation successful - User ID: {user_apikey.user_id}")
-            return user_apikey.user_id
+            logger.info(f"Apikey validation successful - User ID: {user_apikey.user_id}, API Key ID: {user_apikey.id}")
+            return (user_apikey.user_id, user_apikey.id)
             
         except Exception as e:
             logger.error(f"Error occurred while querying user apikey: {str(e)}", exc_info=True)

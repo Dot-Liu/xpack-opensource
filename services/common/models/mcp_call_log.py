@@ -29,7 +29,7 @@ class McpCallLog(Base):
     api_id: Mapped[str] = mapped_column(String(100), nullable=False, comment="API工具ID")
     tool_name: Mapped[str] = mapped_column(String(200), nullable=False, comment="工具名称")
     input_params: Mapped[str] = mapped_column(Text, nullable=True, comment="调用参数")
-    apikey: Mapped[str] = mapped_column(String(100), nullable=True, comment="API密钥（前10个字符用于审计和统计）")
+    apikey_id: Mapped[str] = mapped_column(String(36), nullable=True, comment="API密钥ID")
     call_success: Mapped[int] = mapped_column(Boolean, nullable=False, comment="调用是否成功")
     unit_price: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False, comment="单次调用价格")
     actual_cost: Mapped[float] = mapped_column(Numeric(10, 4), nullable=True, default=0.0000, comment="实际扣费金额")

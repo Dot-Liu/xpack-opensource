@@ -28,19 +28,19 @@ class McpServerFactory:
         self.tool_service = McpToolService()
         self.billing_service = billing_service
 
-    async def create_server(self, service_id: str, user_id: Optional[str] = None, apikey_for_log: Optional[str] = None) -> Server:
+    async def create_server(self, service_id: str, user_id: Optional[str] = None, apikey_id: Optional[str] = None) -> Server:
         """
         为指定的service_id创建MCP服务器
 
         Args:
             service_id: 服务ID
             user_id: 用户ID (用于计费，可选)
-            apikey_for_log: API密钥前缀用于日志记录 (可选)
+            apikey_id: API密钥ID用于计费记录 (可选)
 
         Returns:
             Server: 配置好的MCP服务器实例
         """
-        logger.info(f"Creating MCP server instance - Service ID: {service_id}, User ID: {user_id}, API Key: {apikey_for_log}...")
+        logger.info(f"Creating MCP server instance - Service ID: {service_id}, User ID: {user_id}, API Key ID: {apikey_id}...")
 
         app = Server(f"mcp-service-{service_id}")
 
@@ -60,7 +60,7 @@ class McpServerFactory:
                 logger.error(error_msg)
                 return [types.TextContent(type="text", text=error_msg)]
             
-            return await self._handle_call_tool_with_billing(service_id, name, arguments, user_id, apikey_for_log)
+            return await self._handle_call_tool_with_billing(service_id, name, arguments, user_id, apikey_id)
 
         logger.info("MCP server instance created successfully")
         return app
@@ -97,7 +97,7 @@ class McpServerFactory:
         finally:
             db.close()
 
-    async def _handle_call_tool_with_billing(self, service_id: str, name: str, arguments: dict, user_id: str, apikey_for_log: Optional[str] = None) -> List[types.Content]:
+    async def _handle_call_tool_with_billing(self, service_id: str, name: str, arguments: dict, user_id: str, apikey_id: Optional[str] = None) -> List[types.Content]:
         """
         带计费逻辑的工具调用处理
 
@@ -106,7 +106,7 @@ class McpServerFactory:
             name: 工具名称
             arguments: 工具参数
             user_id: 用户ID
-            apikey_for_log: API密钥前缀用于日志记录
+            apikey_id: API密钥ID用于计费记录
 
         Returns:
             List[types.Content]: 执行结果
@@ -133,7 +133,7 @@ class McpServerFactory:
                 unit_price=pre_deduct_result.service_price,
                 call_start_time=call_start_time,
                 call_end_time=datetime.now(timezone.utc),
-                apikey=apikey_for_log,
+                apikey_id=apikey_id,
             )
             await self.billing_service.send_billing_message(call_log, False, datetime.now(timezone.utc))
 
@@ -189,7 +189,7 @@ class McpServerFactory:
             unit_price=pre_deduct_result.service_price,
             call_start_time=call_start_time,
             call_end_time=call_end_time,
-            apikey=apikey_for_log,
+            apikey_id=apikey_id,
         )
 
         await self.billing_service.send_billing_message(call_log, call_success, call_end_time)

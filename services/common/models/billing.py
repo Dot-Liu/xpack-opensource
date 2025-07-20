@@ -20,7 +20,7 @@ class BillingMessage:
     call_start_time: datetime
     call_end_time: Optional[datetime] = None
     call_log_id: Optional[str] = None
-    apikey: Optional[str] = None
+    apikey_id: Optional[str] = None
 
 
 @dataclass
@@ -34,7 +34,7 @@ class ApiCallLogInfo:
     unit_price: Decimal
     call_start_time: datetime
     call_end_time: Optional[datetime] = None
-    apikey: Optional[str] = None
+    apikey_id: Optional[str] = None
 
 
 @dataclass
