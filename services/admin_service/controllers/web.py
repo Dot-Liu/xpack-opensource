@@ -24,29 +24,22 @@ def get_public_mcp_services(
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
 ):
     """Get paginated list of public MCP services with keyword search."""
-    
+
     # Validate pagination parameters using ValidationUtils
     validated_page, validated_page_size = ValidationUtils.validate_pagination(page, page_size)
-    
+
     # Set default keyword if not provided
     search_keyword = keyword.strip() if keyword else ""
-    
+
     logger.info(f"Fetching public MCP services - page: {validated_page}, size: {validated_page_size}, keyword: '{search_keyword}'")
-    
+
     # Get service list - let any exception bubble up to middleware
     service_list, total = mcp_manager_service.get_public_services_paginated(
-        keyword=search_keyword, 
-        page=validated_page, 
-        page_size=validated_page_size
+        keyword=search_keyword, page=validated_page, page_size=validated_page_size
     )
 
     logger.info(f"Successfully retrieved {len(service_list)} services")
-    return ResponseUtils.success_page(
-        data=service_list, 
-        page_num=validated_page, 
-        page_size=validated_page_size, 
-        total=total
-    )
+    return ResponseUtils.success_page(data=service_list, page_num=validated_page, page_size=validated_page_size, total=total)
 
 
 @router.get("/mcp_service_info", summary="Get public MCP service information")
@@ -55,17 +48,17 @@ def get_public_mcp_service_info(
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
 ):
     """Get detailed information of a public MCP service by ID."""
-    
+
     # Validate service ID parameter
     ValidationUtils.require_non_empty_string(id, "id")
-    
+
     logger.info(f"Fetching public MCP service info for ID: {id}")
-    
+
     # Get service information - let any exception bubble up to middleware
     service_info = mcp_manager_service.get_public_service_info(id)
-    
+
     # Validate that service exists
     ValidationUtils.require_resource_exists(service_info, "service")
-    
+
     logger.info(f"Successfully retrieved service info for ID: {id}")
     return ResponseUtils.success(data=service_info)
