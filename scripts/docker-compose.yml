@@ -12,35 +12,27 @@ services:
     ports:
       - "33306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD={MYSQL_PWD}
+      - MYSQL_ROOT_PASSWORD=mysql_ZTdhRB
       - MYSQL_DATABASE=xpack
     volumes:
       - /var/lib/xpack/mysql:/var/lib/mysql
     networks:
       - xpack
   xpack:
-    image: xpack/xpack
+    image: xpack
     container_name: xpack
     privileged: true
     restart: always
     networks:
       - xpack
     ports:
-      - "5000:3000"
+      - "3000:3000"
     depends_on:
       - xpack-mysql
-    environment:
-      - MYSQL_USER_NAME=root
-      - MYSQL_PWD={MYSQL_PWD}
-      - MYSQL_IP=xpack-mysql
-      - MYSQL_PORT=3306                 # MySQL port
-      - MYSQL_DB="xpack"
-      - ERROR_DIR=work/logs  # Log directory
-      - REDIS_ADDR=xpack-redis:6379           # Redis cluster address, multiple addresses separated by commas
-      - REDIS_PWD={REDIS_PWD}                         # Redis password
-      - ADMIN_PASSWORD={ADMIN_PASSWORD}
-      - Init=true
-      - InfluxdbToken={INFLUXDB_TOKEN}
+      - xpack-redis
+      - xpack-rabbitmq
+    # env_file:
+      # - .env
   xpack-redis:
     container_name: xpack-redis
     image: redis:7.2.4
@@ -52,7 +44,17 @@ services:
     command:
       - bash
       - -c
-      - "redis-server --protected-mode yes --logfile redis.log --appendonly no --port 6379 --requirepass {REDIS_PWD}"
+      - "redis-server --protected-mode yes --logfile redis.log --appendonly no --port 6379 --requirepass redis_6sJZDm"
+    networks:
+      - xpack
+  xpack-rabbitmq:
+    image: rabbitmq:4.1.2-alpine
+    container_name: xpack-rabbitmq
+    privileged: true
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbitmq
+      - RABBITMQ_DEFAULT_PASS=rabbitmq_Gs123dA
     networks:
       - xpack
 networks:

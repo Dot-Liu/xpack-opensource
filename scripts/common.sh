@@ -49,3 +49,26 @@ echo_debug() {
 echo_trace() {
     log_message "TRAC" "\033[35m" "$1"
 }
+
+# ===========================================================================
+# File: common.sh
+# Description: common functions
+# Usage: . ./common.sh
+# ===========================================================================
+
+gen_version() {
+  # 判断是否传参
+  if [ -n "$1" ]; then
+    echo "$1"
+    return
+  fi
+  # 是否安装了 git
+
+  tag=$(git describe --abbrev=0 --tags)
+
+  if [ $? -ne 0 ]; then
+    tag=$(git rev-parse --short HEAD)
+  fi
+
+  echo "${tag}"
+}

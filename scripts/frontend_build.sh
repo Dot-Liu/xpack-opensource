@@ -72,6 +72,7 @@ clean_build_cache() {
 frontend_build() {
     echo_info "Begin frontend build..."
     cd "${FRONTEND_DIR}" || exit 1
+    export NEXT_PUBLIC_API_URL=http://127.0.0.1:8001
     echo_debug "Running command: pnpm install --frozen-lockfile"
     pnpm install --frozen-lockfile || exit 1
     
@@ -99,11 +100,26 @@ fi
 frontend_build
 
 echo_debug "Copying build artifacts to output directory"
+
+# 首先确保目标目录存在
+mkdir -p "${FRONTEND_OUT_DIR}/.next"
+
+# 复制 standalone 目录内容
 echo_debug "Copying .next/standalone directory to output directory"
-cp -r "${FRONTEND_DIR}/.next/standalone/." "${FRONTEND_OUT_DIR}/" || exit 1
+if [ -d "${FRONTEND_DIR}/.next/standalone" ]; then
+    cp -R "${FRONTEND_DIR}/.next/standalone/." "${FRONTEND_OUT_DIR}/"
+fi
+
+# 复制 static 目录
 echo_debug "Copying .next/static to output directory"
-cp -r "${FRONTEND_DIR}/.next/static" "${FRONTEND_OUT_DIR}/.next/" || exit 1
+if [ -d "${FRONTEND_DIR}/.next/static" ]; then
+    cp -R "${FRONTEND_DIR}/.next/static" "${FRONTEND_OUT_DIR}/.next/"
+fi
+
+# 复制 public 目录
 echo_debug "Copying public to output directory"
-cp -r "${FRONTEND_DIR}/public" "${FRONTEND_OUT_DIR}/" || exit 1
+if [ -d "${FRONTEND_DIR}/public" ]; then
+    cp -R "${FRONTEND_DIR}/public" "${FRONTEND_OUT_DIR}/"
+fi
 
 echo_info "Frontend build success."
