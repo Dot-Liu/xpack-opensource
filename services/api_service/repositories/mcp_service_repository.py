@@ -4,26 +4,26 @@ from typing import Optional, List
 
 
 class McpServiceRepository:
-    """API服务的MCP服务仓储层"""
+    """MCP service repository layer for API service"""
 
     def __init__(self, db: Session):
         self.db = db
 
     def get_available_services(self) -> List[McpService]:
         """
-        获取所有可用的MCP服务列表
-        只返回已启用的服务
+        Get list of all available MCP services
+        Only returns enabled services
         """
         return self.db.query(McpService).filter(McpService.enabled == 1).order_by(McpService.created_at.desc()).all()
 
     def get_by_id(self, service_id: str) -> Optional[McpService]:
         """
-        根据服务ID获取单个MCP服务
+        Get single MCP service by service ID
         """
         return self.db.query(McpService).filter(McpService.id == service_id, McpService.enabled == 1).first()
 
     def get_by_slug_name(self, slug_name: str) -> Optional[McpService]:
         """
-        根据slug名称获取单个MCP服务
+        Get single MCP service by slug name
         """
         return self.db.query(McpService).filter(McpService.slug_name == slug_name, McpService.enabled == 1).first()

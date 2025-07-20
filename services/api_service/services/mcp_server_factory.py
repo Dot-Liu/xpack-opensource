@@ -1,5 +1,5 @@
 """
-MCP服务器工厂 - 负责创建和配置MCP服务器实例
+MCP Server Factory - Create and configure MCP server instances
 """
 
 import uuid
@@ -22,25 +22,25 @@ logger = get_logger(__name__)
 
 
 class McpServerFactory:
-    """MCP服务器工厂类"""
+    """MCP server factory class"""
 
     def __init__(self):
         self.tool_service = McpToolService()
         self.billing_service = billing_service
 
-    async def create_server(self, service_id: str, user_id: Optional[str] = None, apikey_for_log: Optional[str] = None) -> Server:
+    async def create_server(self, service_id: str, user_id: Optional[str] = None, apikey_id: Optional[str] = None) -> Server:
         """
-        为指定的service_id创建MCP服务器
+        Create MCP server for specified service_id
 
         Args:
-            service_id: 服务ID
-            user_id: 用户ID (用于计费，可选)
-            apikey_for_log: API密钥前缀用于日志记录 (可选)
+            service_id: Service ID
+            user_id: User ID (for billing, optional)
+            apikey_id: API key ID for billing records (optional)
 
         Returns:
-            Server: 配置好的MCP服务器实例
+            Server: Configured MCP server instance
         """
-        logger.info(f"Creating MCP server instance - Service ID: {service_id}, User ID: {user_id}, API Key: {apikey_for_log}...")
+        logger.info(f"Creating MCP server instance - Service ID: {service_id}, User ID: {user_id}, API Key ID: {apikey_id}...")
 
         app = Server(f"mcp-service-{service_id}")
 
@@ -60,70 +60,70 @@ class McpServerFactory:
                 logger.error(error_msg)
                 return [types.TextContent(type="text", text=error_msg)]
             
-            return await self._handle_call_tool_with_billing(service_id, name, arguments, user_id, apikey_for_log)
+            return await self._handle_call_tool_with_billing(service_id, name, arguments, user_id, apikey_id)
 
         logger.info("MCP server instance created successfully")
         return app
 
     async def _handle_list_tools(self, service_id: str) -> List[types.Tool]:
         """
-        处理工具列表查询
+        Handle tools list query
 
         Args:
-            service_id: 服务ID
+            service_id: Service ID
 
         Returns:
-            List[types.Tool]: 工具列表
+            List[types.Tool]: Tools list
         """
-        logger.info(f"收到工具列表查询请求 - 服务ID: {service_id}")
+        logger.info(f"Received tools list query request - Service ID: {service_id}")
 
         db = next(get_db())
         try:
-            # 创建服务实例
+            # Create service instance
             mcp_service = self._create_mcp_service(db)
 
-            # 获取工具列表
+            # Get tools list
             tools = mcp_service.get_tools_by_service_id(service_id)
-            logger.info(f"找到 {len(tools)} 个工具")
+            logger.info(f"Found {len(tools)} tools")
 
             for tool in tools:
-                logger.debug(f"工具: {tool.name} - {tool.description}")
+                logger.debug(f"Tool: {tool.name} - {tool.description}")
 
             return tools
 
         except Exception as e:
-            logger.error(f"获取工具列表失败: {str(e)}", exc_info=True)
+            logger.error(f"Failed to get tools list: {str(e)}", exc_info=True)
             raise
         finally:
             db.close()
 
-    async def _handle_call_tool_with_billing(self, service_id: str, name: str, arguments: dict, user_id: str, apikey_for_log: Optional[str] = None) -> List[types.Content]:
+    async def _handle_call_tool_with_billing(self, service_id: str, name: str, arguments: dict, user_id: str, apikey_id: Optional[str] = None) -> List[types.Content]:
         """
-        带计费逻辑的工具调用处理
+        Handle tool call with billing logic
 
         Args:
-            service_id: 服务ID
-            name: 工具名称
-            arguments: 工具参数
-            user_id: 用户ID
-            apikey_for_log: API密钥前缀用于日志记录
+            service_id: Service ID
+            name: Tool name
+            arguments: Tool arguments
+            user_id: User ID
+            apikey_id: API key ID for billing records
 
         Returns:
-            List[types.Content]: 执行结果
+            List[types.Content]: Execution result
         """
         call_start_time = datetime.now(timezone.utc)
         call_log_id = str(uuid.uuid4())
 
-        logger.info(f"收到带计费的工具调用请求 - 用户ID: {user_id}, 服务ID: {service_id}, 工具名称: {name}")
-        logger.debug(f"工具参数: {arguments}")
+        logger.info(f"Received tool call request with billing - User ID: {user_id}, Service ID: {service_id}, Tool name: {name}")
+        logger.debug(f"Tool arguments: {arguments}")
 
-        # 1. 预扣费检查
+        # 1. Pre-deduction check
         pre_deduct_result = await self.billing_service.check_and_pre_deduct(user_id, service_id, name)
         if not pre_deduct_result.success:
-            logger.warning(f"预扣费失败: {pre_deduct_result.message}")
+            logger.warning(f"Pre-deduction failed: {pre_deduct_result.message}")
             error_msg = f"Billing check failed: {pre_deduct_result.message}"
 
-            # 发送失败的计费消息
+            # Send failed billing message
             call_log = ApiCallLogInfo(
                 user_id=user_id,
                 service_id=service_id,
@@ -133,21 +133,21 @@ class McpServerFactory:
                 unit_price=pre_deduct_result.service_price,
                 call_start_time=call_start_time,
                 call_end_time=datetime.now(timezone.utc),
-                apikey=apikey_for_log,
+                apikey_id=apikey_id,
             )
             await self.billing_service.send_billing_message(call_log, False, datetime.now(timezone.utc))
 
             return [types.TextContent(type="text", text=error_msg)]
 
-        logger.info(f"预扣费成功 - 用户ID: {user_id}, 扣费金额: {pre_deduct_result.service_price}")
+        logger.info(f"Pre-deduction successful - User ID: {user_id}, Deduction amount: {pre_deduct_result.service_price}")
 
-        # 2. 执行工具调用
+        # 2. Execute tool call
         db = next(get_db())
         call_success = False
         result: List[types.ContentBlock] = []
 
         try:
-            # 创建服务实例
+            # Create service instance
             mcp_service = self._create_mcp_service(db)
 
             # Find tool configuration
@@ -189,24 +189,24 @@ class McpServerFactory:
             unit_price=pre_deduct_result.service_price,
             call_start_time=call_start_time,
             call_end_time=call_end_time,
-            apikey=apikey_for_log,
+            apikey_id=apikey_id,
         )
 
         await self.billing_service.send_billing_message(call_log, call_success, call_end_time)
         logger.info(f"Billing message sent - User ID: {user_id}, Tool: {name}, Success: {call_success}")
 
-        # 确保返回类型正确
+        # Ensure return type is correct
         return result
 
     def _create_mcp_service(self, db) -> McpService:
         """
-        创建MCP服务实例
+        Create MCP service instance
 
         Args:
-            db: 数据库连接
+            db: Database connection
 
         Returns:
-            McpService: MCP服务实例
+            McpService: MCP service instance
         """
         tool_api_repository = McpToolApiRepository(db)
         service_repository = McpServiceRepository(db)

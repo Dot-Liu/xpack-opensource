@@ -8,11 +8,6 @@ class PaymentChannel(Base):
     __tablename__ = "payment_channel"
     """
     CREATE TABLE `payment_channel` (
-    `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '支付渠道唯一ID',
-    `name` varchar(255) DEFAULT NULL COMMENT '渠道名称',
-    `status` tinyint DEFAULT NULL COMMENT '渠道状态，0:未启用，1已启用',
-    `config` text COMMENT '配置信息',
-    `update_at` timestamp NULL DEFAULT NULL COMMENT '更新时间',
     PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
     """

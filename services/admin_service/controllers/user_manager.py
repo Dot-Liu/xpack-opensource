@@ -70,7 +70,7 @@ async def get_user_list(
     # Get user list - let any exception bubble up to middleware
     total, users = user_service.get_user_list(skip, validated_page_size)
 
-    # 转换用户数据为列表
+    # Convert user data to list
     user_list = []
     for user in users:
         wallet = user_wallet_service.get_by_user_id(user.id)

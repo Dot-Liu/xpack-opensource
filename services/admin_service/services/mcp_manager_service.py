@@ -55,7 +55,7 @@ def parse_tags_to_string(tags_array: Optional[list]) -> str:
 
 
 def normalize_slug_name(text: str) -> str:
-    """将文本转换为适合作为slug的英文字符串"""
+    """Convert text to slug-suitable English string"""
     # 移除非英文字符，只保留字母、数字、空格、横线、下划线
     normalized = re.sub(r"[^\w\s\-]", "", text, flags=re.ASCII)
     # 将空格和横线转为下划线，转为小写
@@ -258,7 +258,7 @@ class McpManagerService:
         return self.mcp_service_repository.get_by_id(id)
 
     def get_service_info(self, id: str) -> Optional[dict]:
-        """获取服务详细信息，包括API列表"""
+        """Get service details including API list"""
         service = self.mcp_service_repository.get_by_id(id)
         if not service:
             return None
@@ -289,7 +289,7 @@ class McpManagerService:
         return self.mcp_service_repository.get_all()
 
     def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[list[McpService], int]:
-        """分页获取服务列表"""
+        """Get service list with pagination"""
         return self.mcp_service_repository.get_all_paginated(page=page, page_size=page_size)
 
     def create_service_from_openapi(self, openapi_data: OpenApiForAI) -> str:
@@ -463,7 +463,7 @@ class McpManagerService:
             raise ValueError(f"Failed to update service from OpenAPI: {str(e)}")
 
     def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[list[dict], int]:
-        """分页获取公开服务列表，返回包含API信息的格式化数据"""
+        """Get public services list with pagination, returns formatted data with API info"""
         services, total = self.mcp_service_repository.get_public_services_paginated(keyword, page, page_size)
 
         service_list = []
@@ -495,7 +495,7 @@ class McpManagerService:
         return service_list, total
 
     def get_public_service_info(self, id: str) -> Optional[dict]:
-        """获取公开服务的详细信息（只返回已启用的服务和API）"""
+        """Get public service details (only returns enabled services and APIs)"""
         service = self.mcp_service_repository.get_by_id(id)
         if not service or service.enabled != 1:
             return None

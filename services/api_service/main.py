@@ -1,6 +1,5 @@
 """
-API Service - FastAPI应用主入口
-专门提供MCP Streamable HTTP服务
+API Service - FastAPI main entry point for MCP Streamable HTTP service
 """
 
 from fastapi import FastAPI, Request
@@ -37,10 +36,10 @@ async def lifespan(app: FastAPI):
     logger.info("MCP Streamable HTTP Service shutting down...")
 
 
-# 创建FastAPI应用
+# Create FastAPI application
 app = FastAPI(
     title="XPack MCP Service", 
-    description="XPack开源版MCP Streamable HTTP服务",
+    description="XPack MCP Streamable HTTP service",
     version="1.0.0",
     openapi_url="/openapi.json",
     lifespan=lifespan
@@ -98,20 +97,20 @@ async def validation_exception_handler(request, exc):
 # Add global exception handling middleware (must be first for proper error handling)
 app.add_middleware(ExceptionHandlingMiddleware)
 
-# 添加CORS中间件 - MCP客户端需要跨域支持和重连机制
+# Add CORS middleware for MCP client cross-origin and reconnection support
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # MCP客户端可能来自不同域名
+    allow_origins=["*"],  # MCP clients may come from different domains
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],  # 添加OPTIONS支持预检请求
+    allow_methods=["GET", "POST", "OPTIONS"],  # Add OPTIONS for preflight requests
     allow_headers=["*"],
-    expose_headers=["*"],  # 暴露所有响应头，支持SSE重连
+    expose_headers=["*"],  # Expose all response headers for SSE reconnection
 )
 
-# 创建MCP控制器实例
+# Create MCP controller instance
 mcp = McpController()
 
-# 健康检查端点
+# Health check endpoints
 @app.get("/")
 def read_root():
     return {
@@ -125,17 +124,16 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    """健康检查"""
+    """Health check endpoint"""
     return {"status": "healthy", "service": "mcp-streamable-http"}
 
 @app.get("/mcp/status/{service_id}")
 def mcp_service_status(service_id: str):
     """
-    检查指定MCP服务的状态
-    MCP客户端可以使用此端点检查服务是否可用，用于重连判断
-    支持service_id（UUID）和slug_name两种模式
+    Check MCP service status for specified service
+    Supports both service_id (UUID) and slug_name
     """
-    # 解析service_id，支持ID和slug_name两种模式
+    # Parse service_id, supports both ID and slug_name
     actual_service_id = None
     service_name = "unknown"
     
@@ -146,13 +144,13 @@ def mcp_service_status(service_id: str):
         db = next(get_db())
         service_repository = McpServiceRepository(db)
         
-        # 首先尝试按ID查找
+        # Try to find by ID first
         service = service_repository.get_by_id(service_id)
         if service:
             actual_service_id = service.id
             service_name = service.name
         else:
-            # 如果按ID未找到，尝试按slug_name查找
+            # If not found by ID, try by slug_name
             service = service_repository.get_by_slug_name(service_id)
             if service:
                 actual_service_id = service.id
@@ -161,7 +159,7 @@ def mcp_service_status(service_id: str):
         db.close()
         
     except Exception as e:
-        logger.error(f"查询服务状态时发生错误: {str(e)}")
+        logger.error(f"Error occurred while querying service status: {str(e)}")
     
     if not actual_service_id:
         return {
@@ -170,7 +168,7 @@ def mcp_service_status(service_id: str):
             "error": "Service not found or not available"
         }
     
-    # 获取该服务的连接统计
+    # Get connection statistics for this service
     service_connections = connection_manager.get_service_connections(actual_service_id)
     
     return {
@@ -187,10 +185,8 @@ def mcp_service_status(service_id: str):
 
 @app.get("/mcp/connections/stats")
 def mcp_connections_stats():
-    """
-    获取MCP连接统计信息 - 用于监控和调试
-    """
-    # 清理超时连接
+    """Get MCP connection statistics for monitoring and debugging"""
+    # Cleanup stale connections
     connection_manager.cleanup_stale_connections()
     
     return {
@@ -198,8 +194,8 @@ def mcp_connections_stats():
         "stats": connection_manager.get_stats()
     }
 
-# 创建MCP Streamable HTTP路由
-# 使用Starlette子应用处理MCP协议的底层SSE连接
+# Create MCP Streamable HTTP routes
+# Use Starlette sub-app to handle MCP protocol's underlying SSE connections
 mcp_routes = [
     Route("/{service_id}", endpoint=mcp.handle_sse_connection, methods=["GET"]),
     Mount("/messages/", app=mcp.get_sse_mount_handler()),
@@ -207,7 +203,7 @@ mcp_routes = [
 
 mcp_app = Starlette(routes=mcp_routes)
 
-# 将MCP子应用挂载到FastAPI应用上
+# Mount MCP sub-app to FastAPI application
 app.mount("/mcp", mcp_app)
 
 # Logging is already configured by setup_logging("api_service")

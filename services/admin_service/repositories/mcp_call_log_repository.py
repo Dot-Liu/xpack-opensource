@@ -9,7 +9,7 @@ from services.common.models.mcp_call_log import McpCallLog, ProcessStatus
 
 
 class McpCallLogRepository:
-    """MCP调用记录仓储类"""
+    """MCP call log repository class"""
     
     def __init__(self, db: Session):
         self.db = db

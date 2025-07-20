@@ -20,7 +20,8 @@ from services.admin_service.controllers import sys_config
 from services.admin_service.controllers import payment_channel
 from services.admin_service.controllers import init_config
 from services.admin_service.controllers import web
-from services.admin_service.controllers import stats_data
+from services.admin_service.controllers import admin_stats
+from services.admin_service.controllers import user_stats
 from services.admin_service.controllers import email_test
 from services.admin_service.consumers.billing_message_consumer import BillingMessageConsumer
 from services.admin_service.middleware import AuthMiddleware
@@ -50,10 +51,10 @@ def start_billing_consumer():
 
 
 def stop_billing_consumer():
-    """停止计费消费者"""
+    """Stop billing consumer"""
     global consumer_instance
     if consumer_instance:
-        logger.info("正在停止计费消息消费者...")
+        logger.info("Stopping billing message consumer...")
         consumer_instance.stop_consuming()
 
 
@@ -154,7 +155,8 @@ app.include_router(sys_config.router, prefix="/api/sysconfig")
 app.include_router(payment_channel.router, prefix="/api/payment_channel")
 app.include_router(init_config.router, prefix="/api/common")
 app.include_router(web.router, prefix="/api/web")
-app.include_router(stats_data.router, prefix="/api/overview")
+app.include_router(admin_stats.router, prefix="/api/overview")
+app.include_router(user_stats.router, prefix="/api/stats")
 app.include_router(email_test.router, prefix="/api/email_test")
 
 # Logging is already configured by setup_logging("admin_service")

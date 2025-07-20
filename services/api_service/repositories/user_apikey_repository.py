@@ -1,5 +1,5 @@
 """
-用户API密钥仓储类 - API服务中使用
+User API key repository class - used in API service
 """
 from datetime import datetime, timezone
 from typing import Optional
@@ -8,42 +8,42 @@ from services.common.models.user_apikey import UserApiKey
 
 
 class UserApiKeyRepository:
-    """用户API密钥仓储类"""
+    """User API key repository class"""
     
     def __init__(self, db: Session):
         self.db = db
 
     def get_by_apikey(self, apikey: str) -> Optional[UserApiKey]:
         """
-        根据API密钥查询用户API密钥信息
+        Query user API key info by API key
         
         Args:
-            apikey: API密钥
+            apikey: API key
             
         Returns:
-            Optional[UserApiKey]: 用户API密钥信息，如果不存在则返回None
+            Optional[UserApiKey]: User API key info, returns None if not exists
         """
         return self.db.query(UserApiKey).filter(UserApiKey.apikey == apikey).first()
     
     def is_apikey_valid(self, apikey: str) -> bool:
         """
-        检查API密钥是否有效
+        Check if API key is valid
         
         Args:
-            apikey: API密钥
+            apikey: API key
             
         Returns:
-            bool: 是否有效
+            bool: Whether valid
         """
         user_apikey = self.get_by_apikey(apikey)
         if not user_apikey:
             return False
             
-        # 检查是否过期
+        # Check if expired
         if user_apikey.expire_at:
-            # 确保时区一致性：如果数据库中的时间没有时区信息，假设它是UTC时间
+            # Ensure timezone consistency: if database time has no timezone info, assume it's UTC time
             if user_apikey.expire_at.tzinfo is None:
-                # 数据库时间没有时区信息，假设为UTC
+                # Database time has no timezone info, assume UTC
                 expire_at_utc = user_apikey.expire_at.replace(tzinfo=timezone.utc)
             else:
                 expire_at_utc = user_apikey.expire_at

@@ -24,20 +24,20 @@ class McpToolApiRepository:
         return mcp_tool_api
 
     def get_by_service_id(self, service_id: str) -> list[McpToolApi]:
-        """根据服务ID获取API列表"""
+        """Get API list by service ID"""
         return self.db.query(McpToolApi).filter(
             McpToolApi.service_id == service_id,
             McpToolApi.is_deleted == 0
         ).all()
 
     def get_by_id(self, api_id: str) -> Optional[McpToolApi]:
-        """根据API ID获取单个API"""
+        """Get single API by API ID"""
         return self.db.query(McpToolApi).filter(
             McpToolApi.id == api_id,
             McpToolApi.is_deleted == 0
         ).first()
 
     def delete_by_service_id(self, service_id: str) -> None:
-        """删除指定服务ID的所有API记录"""
+        """Delete all API records for specified service ID"""
         self.db.query(McpToolApi).filter(McpToolApi.service_id == service_id).delete()
         self.db.commit()

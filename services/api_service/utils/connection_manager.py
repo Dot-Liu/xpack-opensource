@@ -1,5 +1,5 @@
 """
-连接管理工具 - 帮助MCP客户端管理连接状态和重连
+Connection management utility - Help MCP clients manage connection state and reconnection
 """
 import time
 from typing import Dict, Optional
@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class ConnectionInfo:
-    """连接信息"""
+    """Connection information"""
     service_id: str
     user_id: str
     client_ip: str
@@ -22,9 +22,9 @@ class ConnectionInfo:
 
 class ConnectionManager:
     """
-    MCP连接管理器
+    MCP connection manager
     
-    用于跟踪活跃连接，帮助诊断连接问题和支持重连逻辑
+    Track active connections, help diagnose connection issues and support reconnection logic
     """
     
     def __init__(self):
@@ -32,28 +32,28 @@ class ConnectionManager:
         
     def register_connection(self, service_id: str, user_id: str, client_ip: str) -> str:
         """
-        注册新连接
+        Register new connection
         
         Args:
-            service_id: 服务ID
-            user_id: 用户ID  
-            client_ip: 客户端IP
+            service_id: Service ID
+            user_id: User ID  
+            client_ip: Client IP
             
         Returns:
-            str: 连接标识符
+            str: Connection identifier
         """
         connection_key = f"{service_id}:{user_id}:{client_ip}"
         current_time = time.time()
         
         if connection_key in self.connections:
-            # 更新现有连接
+            # Update existing connection
             conn_info = self.connections[connection_key]
             conn_info.connected_at = current_time
             conn_info.last_activity = current_time
             conn_info.connection_count += 1
-            logger.info(f"更新连接记录 - {connection_key}, 连接次数: {conn_info.connection_count}")
+            logger.info(f"Updated connection record - {connection_key}, connection count: {conn_info.connection_count}")
         else:
-            # 创建新连接记录
+            # Create new connection record
             self.connections[connection_key] = ConnectionInfo(
                 service_id=service_id,
                 user_id=user_id,
@@ -61,53 +61,53 @@ class ConnectionManager:
                 connected_at=current_time,
                 last_activity=current_time
             )
-            logger.info(f"注册新连接 - {connection_key}")
+            logger.info(f"Registered new connection - {connection_key}")
             
         return connection_key
         
     def update_activity(self, connection_key: str) -> None:
         """
-        更新连接活动时间
+        Update connection activity time
         
         Args:
-            connection_key: 连接标识符
+            connection_key: Connection identifier
         """
         if connection_key in self.connections:
             self.connections[connection_key].last_activity = time.time()
             
     def unregister_connection(self, connection_key: str) -> None:
         """
-        注销连接
+        Unregister connection
         
         Args:
-            connection_key: 连接标识符
+            connection_key: Connection identifier
         """
         if connection_key in self.connections:
             conn_info = self.connections.pop(connection_key)
             duration = time.time() - conn_info.connected_at
-            logger.info(f"注销连接 - {connection_key}, 持续时间: {duration:.2f}秒")
+            logger.info(f"Unregistered connection - {connection_key}, duration: {duration:.2f}s")
             
     def get_connection_info(self, connection_key: str) -> Optional[ConnectionInfo]:
         """
-        获取连接信息
+        Get connection information
         
         Args:
-            connection_key: 连接标识符
+            connection_key: Connection identifier
             
         Returns:
-            Optional[ConnectionInfo]: 连接信息
+            Optional[ConnectionInfo]: Connection information
         """
         return self.connections.get(connection_key)
         
     def get_service_connections(self, service_id: str) -> Dict[str, ConnectionInfo]:
         """
-        获取指定服务的所有连接
+        Get all connections for specified service
         
         Args:
-            service_id: 服务ID
+            service_id: Service ID
             
         Returns:
-            Dict[str, ConnectionInfo]: 连接信息字典
+            Dict[str, ConnectionInfo]: Connection information dictionary
         """
         return {
             key: info for key, info in self.connections.items() 
@@ -116,10 +116,10 @@ class ConnectionManager:
         
     def cleanup_stale_connections(self, timeout_seconds: int = 300) -> None:
         """
-        清理超时的连接记录
+        Cleanup stale connection records
         
         Args:
-            timeout_seconds: 超时时间（秒）
+            timeout_seconds: Timeout in seconds
         """
         current_time = time.time()
         stale_keys = [
@@ -128,15 +128,15 @@ class ConnectionManager:
         ]
         
         for key in stale_keys:
-            logger.info(f"清理超时连接 - {key}")
+            logger.info(f"Cleanup stale connection - {key}")
             self.connections.pop(key, None)
             
     def get_stats(self) -> Dict:
         """
-        获取连接统计信息
+        Get connection statistics
         
         Returns:
-            Dict: 统计信息
+            Dict: Statistics information
         """
         total_connections = len(self.connections)
         services = set(info.service_id for info in self.connections.values())
@@ -163,5 +163,5 @@ class ConnectionManager:
         }
 
 
-# 全局连接管理器实例
+# Global connection manager instance
 connection_manager = ConnectionManager()

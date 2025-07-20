@@ -8,7 +8,7 @@ from services.api_service.repositories.mcp_service_repository import McpServiceR
 
 
 class McpService:
-    """MCP服务业务逻辑层"""
+    """MCP service business logic layer"""
 
     def __init__(self, tool_api_repository: McpToolApiRepository, service_repository: McpServiceRepository):
         self.tool_api_repository = tool_api_repository
@@ -16,18 +16,18 @@ class McpService:
 
     def get_tools_by_service_id(self, service_id: str) -> List[types.Tool]:
         """
-        根据服务ID获取该服务的所有工具列表
+        Get all tools list for the service by service ID
         
         Args:
-            service_id: 服务ID
+            service_id: Service ID
             
         Returns:
-            List[types.Tool]: MCP工具列表
+            List[types.Tool]: MCP tools list
         """
-        # 从数据库获取工具配置
+        # Get tool configuration from database
         tool_apis = self.tool_api_repository.get_by_service_id(service_id)
         
-        # 转换为MCP工具格式
+        # Convert to MCP tool format
         tools = []
         for tool_api in tool_apis:
             tool = self._convert_api_to_tool(tool_api)
@@ -38,16 +38,16 @@ class McpService:
 
     def _convert_api_to_tool(self, tool_api: McpToolApi) -> Optional[types.Tool]:
         """
-        将数据库中的API配置转换为MCP工具
+        Convert API configuration from database to MCP tool
         
         Args:
-            tool_api: 数据库中的API配置
+            tool_api: API configuration from database
             
         Returns:
-            Optional[types.Tool]: 转换后的MCP工具，转换失败时返回None
+            Optional[types.Tool]: Converted MCP tool, returns None if conversion fails
         """
         try:
-            # 构建输入schema
+            # Build input schema
             input_schema = self._build_input_schema(tool_api)
             
             return types.Tool(
@@ -57,18 +57,18 @@ class McpService:
                 inputSchema=input_schema
             )
         except Exception as e:
-            print(f"转换工具失败 {tool_api.name}: {e}")
+            print(f"Tool conversion failed {tool_api.name}: {e}")
             return None
 
     def _build_input_schema(self, tool_api: McpToolApi) -> dict:
         """
-        根据API配置构建输入schema
+        Build input schema based on API configuration
         
         Args:
-            tool_api: API配置
+            tool_api: API configuration
             
         Returns:
-            dict: JSON Schema格式的输入定义
+            dict: Input definition in JSON Schema format
         """
         schema = {
             "type": "object",
@@ -76,7 +76,7 @@ class McpService:
             "required": []
         }
         
-        # 解析路径参数
+        # Parse path parameters
         if tool_api.path_parameters:
             try:
                 path_params = json.loads(tool_api.path_parameters)
@@ -91,7 +91,7 @@ class McpService:
             except (json.JSONDecodeError, TypeError):
                 pass
         
-        # 解析查询参数
+        # Parse query parameters
         if tool_api.query_parameters:
             try:
                 query_params = json.loads(tool_api.query_parameters)
@@ -106,7 +106,7 @@ class McpService:
             except (json.JSONDecodeError, TypeError):
                 pass
         
-        # 解析请求体参数
+        # Parse request body parameters
         if tool_api.request_body_schema:
             try:
                 body_schema = json.loads(tool_api.request_body_schema)
@@ -120,14 +120,14 @@ class McpService:
 
     def get_tool_by_name(self, service_id: str, tool_name: str) -> Optional[McpToolApi]:
         """
-        根据服务ID和工具名称获取工具配置
+        Get tool configuration by service ID and tool name
         
         Args:
-            service_id: 服务ID
-            tool_name: 工具名称
+            service_id: Service ID
+            tool_name: Tool name
             
         Returns:
-            Optional[McpToolApi]: 工具配置，未找到时返回None
+            Optional[McpToolApi]: Tool configuration, returns None if not found
         """
         tool_apis = self.tool_api_repository.get_by_service_id(service_id)
         for tool_api in tool_apis:
@@ -137,25 +137,25 @@ class McpService:
 
     def get_service_by_id(self, service_id: str) -> Optional[McpServiceModel]:
         """
-        根据服务ID获取服务信息
+        Get service information by service ID
         
         Args:
-            service_id: 服务ID
+            service_id: Service ID
             
         Returns:
-            Optional[McpServiceModel]: 服务信息，未找到时返回None
+            Optional[McpServiceModel]: Service information, returns None if not found
         """
         return self.service_repository.get_by_id(service_id)
 
     def get_service_auth_info(self, service_id: str) -> dict:
         """
-        获取服务的认证信息
+        Get service authentication information
         
         Args:
-            service_id: 服务ID
+            service_id: Service ID
             
         Returns:
-            dict: 包含base_url和认证信息的字典
+            dict: Dictionary containing base_url and authentication information
         """
         service = self.service_repository.get_by_id(service_id)
         if not service:

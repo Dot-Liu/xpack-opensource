@@ -24,24 +24,14 @@ class PaymentService:
         self.payment_channel_service = PaymentChannelService(db)
 
     def _get_stripe_config(self) -> Optional[dict]:
-        """
-        获取 Stripe 配置
-
-        Returns:
-            Optional[dict]: Stripe 配置信息，包含 secret 和 webhook_secret
-        """
+        """Get Stripe configuration"""
         return self.payment_channel_service.get_stripe_config()
 
     def _configure_stripe_key(self) -> bool:
-        """
-        配置 Stripe API Key
-
-        Returns:
-            bool: 配置是否成功
-        """
+        """Configure Stripe API Key"""
         stripe_config = self._get_stripe_config()
         if not stripe_config:
-            logger.error("无法获取 Stripe 配置")
+            logger.error("Unable to get Stripe configuration")
             return False
 
         stripe.api_key = stripe_config.get("secret")
@@ -50,9 +40,8 @@ class PaymentService:
     logging = logging.getLogger(__name__)
 
     def create_stripe_payment_link(self, base_url: str, user_id: str, amount: float, currency: str = "usd") -> Optional[dict]:
-        # 配置 Stripe API Key
         if not self._configure_stripe_key():
-            raise RuntimeError("Stripe 配置错误")
+            raise RuntimeError("Stripe configuration error")
 
         # get user information
         user = self.user_repository.get_by_id(user_id)

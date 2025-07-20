@@ -1,5 +1,5 @@
 """
-MCP工具服务 - 负责执行MCP工具调用的业务逻辑
+MCP tool service - Business logic for executing MCP tool calls
 """
 import json
 from typing import List, Dict, Any
@@ -12,49 +12,49 @@ logger = get_logger(__name__)
 
 
 class McpToolService:
-    """MCP工具服务类"""
+    """MCP tool service class"""
     
     def __init__(self):
         self.http_builder = HttpRequestBuilder()
     
     async def execute_tool(self, tool_config, arguments: dict, auth_info: dict) -> List[types.Content]:
         """
-        执行工具调用
+        Execute tool call
         
         Args:
-            tool_config: 工具配置
-            arguments: 工具参数
-            auth_info: 服务认证信息
+            tool_config: Tool configuration
+            arguments: Tool parameters
+            auth_info: Service authentication information
             
         Returns:
-            List[types.Content]: 执行结果
+            List[types.Content]: Execution result
         """
         try:
-            logger.info(f"开始执行工具: {tool_config.name}")
+            logger.info(f"Starting tool execution: {tool_config.name}")
             
-            # 构建HTTP请求
+            # Build HTTP request
             request_info = self.http_builder.build_request(tool_config, arguments, auth_info)
             
-            # 发起HTTP请求
+            # Send HTTP request
             response_text = await self._send_http_request(request_info)
             
-            logger.info("工具执行成功完成")
+            logger.info("Tool execution completed successfully")
             return [types.TextContent(type="text", text=response_text)]
             
         except Exception as e:
             error_msg = f"Tool execution failed: {str(e)}"
-            logger.error(f"工具执行失败: {error_msg}", exc_info=True)
+            logger.error(f"Tool execution failed: {error_msg}", exc_info=True)
             return [types.TextContent(type="text", text=error_msg)]
     
     async def _send_http_request(self, request_info: Dict[str, Any]) -> str:
         """
-        发送HTTP请求
+        Send HTTP request
         
         Args:
-            request_info: 请求信息字典
+            request_info: Request information dictionary
             
         Returns:
-            str: 响应文本
+            str: Response text
         """
         url = request_info["url"]
         method = request_info["method"]
@@ -62,9 +62,9 @@ class McpToolService:
         query_params = request_info.get("query_params")
         request_body = request_info.get("request_body")
         
-        logger.info(f"发起HTTP请求: {method} {url}")
-        logger.debug(f"查询参数: {query_params}")
-        logger.debug(f"请求体: {request_body}")
+        logger.info(f"Sending HTTP request: {method} {url}")
+        logger.debug(f"Query parameters: {query_params}")
+        logger.debug(f"Request body: {request_body}")
         
         async with create_mcp_http_client(headers=headers) as client:
             if method == "GET":
@@ -80,10 +80,10 @@ class McpToolService:
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             
-            logger.info(f"HTTP响应状态码: {response.status_code}")
+            logger.info(f"HTTP response status code: {response.status_code}")
             response.raise_for_status()
             
             response_text = response.text
-            logger.debug(f"响应内容长度: {len(response_text)} 字符")
+            logger.debug(f"Response content length: {len(response_text)} characters")
             
             return response_text

@@ -28,16 +28,7 @@ class UserWalletRepository:
         return self.db.query(UserWallet).filter(UserWallet.user_id == user_id).first()
 
     def update_balance(self, user_id: str, new_balance: float) -> bool:
-        """
-        更新用户余额
-        
-        Args:
-            user_id: 用户ID
-            new_balance: 新余额
-            
-        Returns:
-            bool: 更新是否成功
-        """
+        """Update user balance"""
         wallet = self.get_by_user_id(user_id)
         if wallet:
             wallet.balance = new_balance

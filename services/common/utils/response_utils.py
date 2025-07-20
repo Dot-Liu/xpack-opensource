@@ -23,7 +23,7 @@ class ResponseUtils:
         return {
             "success": True, 
             "code": str(code), 
-            "message": message, 
+            "error_message": message, 
             "data": data
         }
 
@@ -53,7 +53,7 @@ class ResponseUtils:
         return {
             "success": True,
             "code": str(code),
-            "message": message,
+            "error_message": message,
             "data": data,
             "page": {
                 "page": page_num, 
@@ -89,7 +89,7 @@ class ResponseUtils:
         return {
             "success": False, 
             "code": str(code), 
-            "message": message, 
+            "error_message": message, 
             "data": data
         }
 
