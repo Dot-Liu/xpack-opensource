@@ -121,5 +121,5 @@ echo_debug "Copying public to output directory"
 if [ -d "${FRONTEND_DIR}/public" ]; then
     cp -R "${FRONTEND_DIR}/public" "${FRONTEND_OUT_DIR}/"
 fi
-
+ls -al "${FRONTEND_OUT_DIR}"
 echo_info "Frontend build success."
