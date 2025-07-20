@@ -1,5 +1,4 @@
 """
-计费相关的数据模型
 """
 from dataclasses import dataclass
 from datetime import datetime
@@ -9,7 +8,6 @@ from typing import Optional
 
 @dataclass
 class BillingMessage:
-    """RabbitMQ计费消息模型"""
     user_id: str
     service_id: str
     api_id: str
@@ -25,7 +23,6 @@ class BillingMessage:
 
 @dataclass
 class ApiCallLogInfo:
-    """API调用记录信息"""
     user_id: str
     service_id: str
     api_id: str
@@ -39,7 +36,6 @@ class ApiCallLogInfo:
 
 @dataclass
 class PreDeductResult:
-    """预扣费结果"""
     success: bool
     message: str
     service_price: Decimal

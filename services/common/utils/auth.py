@@ -10,28 +10,19 @@ from services.common.redis_keys import RedisKeys
 from services.common.utils.cache import get_model_cache, set_model_cache, delete_cache
 import logging
 
-# 配置日志
+# Configure logging
 logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
 
-# 缓存配置
-TOKEN_CACHE_EXPIRE_TIME = 30 * 24 * 3600  # 缓存30天
+# Cache configuration
+TOKEN_CACHE_EXPIRE_TIME = 30 * 24 * 3600  # Cache for 30 days
 
 
 def verify_token(token: str, db: Session) -> Optional[User]:
-    """
-    验证token并返回用户信息（支持Redis缓存）
-
-    Args:
-        token: 访问令牌
-        db: 数据库会话
-
-    Returns:
-        用户对象或None
-    """
+    """Verify token and return user info (with Redis cache support)"""
     try:
-        # 获取token信息
+        # Get token info
         token_cache_key = RedisKeys.user_access_token_key(token)
         user_access_token = get_model_cache(token_cache_key, UserAccessToken)
         if not user_access_token:
@@ -43,15 +34,15 @@ def verify_token(token: str, db: Session) -> Optional[User]:
 
         logging.info(f"query token info")
 
-        # 检查token是否过期
+        # Check if token is expired
         expire_datetime = datetime.strptime(str(user_access_token.expire_at), "%Y-%m-%d %H:%M:%S")
         if expire_datetime <= datetime.now():
             logger.warning(f"Token expired: {token}, expire_at: {user_access_token.expire_at}")
-            # 删除过期的缓存
+            # Delete expired cache
             delete_cache(token_cache_key)
             return None
 
-        # 获取用户信息
+        # Get user info
         user_cache_key = RedisKeys.user_key(str(user_access_token.user_id))
         user = get_model_cache(user_cache_key, User)
         if not user:

@@ -109,16 +109,7 @@ class HttpUtils:
 
     @staticmethod
     async def validate_url_accessibility(url: str, timeout: int = 10) -> bool:
-        """
-        验证URL是否可访问
-
-        Args:
-            url: 要验证的URL
-            timeout: 超时时间（秒）
-
-        Returns:
-            bool: URL是否可访问
-        """
+        """Validate if URL is accessible"""
         try:
             async with aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=timeout)
@@ -126,21 +117,11 @@ class HttpUtils:
                 async with session.head(url) as response:
                     return response.status == 200
         except Exception as e:
-            logger.debug(f"URL验证失败 {url}: {e}")
             return False
 
     @staticmethod
     async def get_url_info(url: str, timeout: int = 10) -> Dict[str, Any]:
-        """
-        获取URL的基本信息
-
-        Args:
-            url: 要获取信息的URL
-            timeout: 超时时间（秒）
-
-        Returns:
-            Dict[str, Any]: URL信息字典
-        """
+        """Get basic URL information"""
         try:
             async with aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=timeout)
@@ -155,7 +136,6 @@ class HttpUtils:
                         "accessible": response.status == 200
                     }
         except Exception as e:
-            logger.debug(f"获取URL信息失败 {url}: {e}")
             return {
                 "status": None,
                 "content_type": "",

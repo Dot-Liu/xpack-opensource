@@ -1,5 +1,4 @@
 """
-MCP调用记录模型
 """
 
 from sqlalchemy import String, Text, Boolean, Numeric, DateTime, Enum
@@ -22,37 +21,37 @@ class McpCallLog(Base):
         String(36),
         primary_key=True,
         autoincrement=False,
-        comment="UUID主键",
+        comment="UUID primary key",
     )
-    user_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="用户ID")
-    service_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="MCP服务ID")
-    api_id: Mapped[str] = mapped_column(String(100), nullable=False, comment="API工具ID")
-    tool_name: Mapped[str] = mapped_column(String(200), nullable=False, comment="工具名称")
-    input_params: Mapped[str] = mapped_column(Text, nullable=True, comment="调用参数")
-    apikey_id: Mapped[str] = mapped_column(String(36), nullable=True, comment="API密钥ID")
-    call_success: Mapped[int] = mapped_column(Boolean, nullable=False, comment="调用是否成功")
-    unit_price: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False, comment="单次调用价格")
-    actual_cost: Mapped[float] = mapped_column(Numeric(10, 4), nullable=True, default=0.0000, comment="实际扣费金额")
-    call_start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=False, comment="调用开始时间")
-    call_end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True, comment="调用结束时间")
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="User ID")
+    service_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="MCP service ID")
+    api_id: Mapped[str] = mapped_column(String(100), nullable=False, comment="API tool ID")
+    tool_name: Mapped[str] = mapped_column(String(200), nullable=False, comment="Tool name")
+    input_params: Mapped[str] = mapped_column(Text, nullable=True, comment="Call parameters")
+    apikey_id: Mapped[str] = mapped_column(String(36), nullable=True, comment="API key ID")
+    call_success: Mapped[int] = mapped_column(Boolean, nullable=False, comment="Call success status")
+    unit_price: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False, comment="Unit price per call")
+    actual_cost: Mapped[float] = mapped_column(Numeric(10, 4), nullable=True, default=0.0000, comment="Actual charged amount")
+    call_start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=False, comment="Call start time")
+    call_end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True, comment="Call end time")
     process_status: Mapped[ProcessStatus] = mapped_column(
         Enum(ProcessStatus, values_callable=lambda obj: [e.value for e in obj]),
         nullable=True,
         default=ProcessStatus.PENDING,
-        comment="处理状态: pending, processed, failed",
+        comment="Process status: pending, processed, failed",
     )
-    error_msg: Mapped[str] = mapped_column(Text, nullable=True, comment="错误信息")
-    wallet_history_id: Mapped[str] = mapped_column(String(36), nullable=True, comment="关联的钱包变更记录ID")
+    error_msg: Mapped[str] = mapped_column(Text, nullable=True, comment="Error message")
+    wallet_history_id: Mapped[str] = mapped_column(String(36), nullable=True, comment="Associated wallet history record ID")
     created_at: Mapped[DateTime] = mapped_column(
         DateTime,
         nullable=True,
         server_default=func.current_timestamp(),
-        comment="创建时间",
+        comment="Creation time",
     )
     updated_at: Mapped[DateTime] = mapped_column(
         DateTime,
         nullable=True,
         server_default=func.current_timestamp(),
         server_onupdate=func.current_timestamp(),
-        comment="更新时间",
+        comment="Update time",
     )
