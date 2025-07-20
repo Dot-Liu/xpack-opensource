@@ -25,6 +25,13 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.localStorage.setItem("i18nextLng", "${platformConfig?.platform?.language || "en"}");
+            `,
+          }}
+        />
       </head>
       <body className={redHatDisplay.className} suppressHydrationWarning>
         <ClientRootProviders initConfig={platformConfig}>
