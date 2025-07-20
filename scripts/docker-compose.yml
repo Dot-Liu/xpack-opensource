@@ -31,8 +31,6 @@ services:
       - xpack-mysql
       - xpack-redis
       - xpack-rabbitmq
-    # env_file:
-      # - .env
   xpack-redis:
     container_name: xpack-redis
     image: redis:7.2.4

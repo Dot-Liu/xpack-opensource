@@ -16,6 +16,9 @@ ImageName="${User}/${App}"
 
 echo "docker push \"${ImageName}:${Version}\""
 docker push "${ImageName}:${Version}"
+docker tag "${ImageName}:${Version}" "${ImageName}:latest"
+echo "docker push \"${ImageName}:latest\""
+docker push "${ImageName}:latest"
 
 if [[ $3 == "upload_qiniu" ]];then
   echo "Upload QINIU Cloud..."
