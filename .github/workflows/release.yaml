@@ -55,7 +55,9 @@ jobs:
         with:
           version: '2.9.0'
       - name: build
-        run: cd scripts && ./docker_build.sh ${{ secrets.DOCKER_USERNAME }}
+        run: ｜
+          ls -al frontend/out
+          cd scripts && ./docker_build.sh ${{ secrets.DOCKER_USERNAME }}
       - name: publish
         env:
           AccessKey: ${{ secrets.AK }}
