@@ -1,6 +1,6 @@
 """
-MCP控制器 - 专门处理MCP Streamable HTTP协议的SSE连接和消息
-支持service_id（UUID）和slug_name两种服务标识符模式
+MCP Controller - Handle MCP Streamable HTTP protocol SSE connections and messages
+Supports both service_id (UUID) and slug_name service identifiers
 """
 
 from typing import Optional
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 
 class McpController:
-    """MCP Streamable HTTP控制器类 - 处理SSE连接和消息路由"""
+    """MCP Streamable HTTP controller class - Handle SSE connections and message routing"""
 
     def __init__(self):
         self.sse = SseServerTransport("/messages/")
@@ -26,23 +26,23 @@ class McpController:
 
     async def handle_sse_connection(self, request: Request):
         """Handle MCP Streamable HTTP SSE connection with resume capability."""
-        # 获取连接标识信息
+        # Get connection identification info
         client_ip = request.client.host if request.client else "unknown"
         user_agent = request.headers.get("user-agent", "unknown")
         service_id = None
         
         try:
-            # 从URL路径中提取service_id (支持ID和slug_name两种模式)
+            # Extract service_id from URL path (supports both ID and slug_name)
             service_id = self._extract_service_id(request)
             if not service_id:
                 logger.error("Missing service_id parameter or service not found")
-                # 对于SSE连接错误，我们需要通过ASGI接口直接发送响应
+                # For SSE connection errors, we need to send response directly via ASGI interface
                 await self._send_error_response(request, 400, "Missing service_id parameter or service not found")
                 return
 
             logger.info(f"Received SSE connection request - Service ID: {service_id}, Client: {client_ip}, UA: {user_agent[:50]}...")
 
-            # 提取用户ID（用于计费）- 必须提供有效的 apikey
+            # Extract user ID (for billing) - must provide valid apikey
             user_info = self._extract_user_info(request)
             if not user_info:
                 logger.error("Missing or invalid apikey, connection rejected")
@@ -51,39 +51,39 @@ class McpController:
 
             user_id, apikey_id = user_info
 
-            # 获取 apikey 用于记录日志（提取前10个字符用于审计）
+            # Get apikey for logging (extract first 10 characters for audit)
             apikey = request.query_params.get("apikey", "")
             apikey_for_log = apikey[:10] if apikey else None
 
-            # 创建MCP服务器实例（传入用户ID和apikey_id用于计费和日志记录）
+            # Create MCP server instance (pass user_id and apikey_id for billing and logging)
             mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
 
-            # 注册连接到管理器
+            # Register connection to manager
             connection_key = connection_manager.register_connection(service_id, user_id, client_ip)
 
-            # 建立SSE连接并运行MCP服务器
+            # Establish SSE connection and run MCP server
             async with self.sse.connect_sse(request.scope, request.receive, request._send) as streams:
                 logger.info(f"SSE connection established - Service ID: {service_id}, User ID: {user_id}, Client: {client_ip}")
 
-                # 配置服务器初始化选项
+                # Configure server initialization options
                 init_options = mcp_server.create_initialization_options()
                 init_options.server_name = f"mcp-service-{service_id}"
                 
-                # 增加连接恢复提示信息
+                # Add connection recovery hint info
                 logger.info(f"Server name set to: {init_options.server_name}")
                 logger.info(f"MCP server startup complete, waiting for client messages... (Connection ID: {connection_key})")
 
                 try:
-                    # 运行MCP服务器
+                    # Run MCP server
                     await mcp_server.run(streams[0], streams[1], init_options)
                     logger.info(f"MCP server run completed - Service ID: {service_id}, User ID: {user_id}")
                 except Exception as e:
                     logger.error(f"Error occurred during MCP server operation: {str(e)}", exc_info=True)
                 finally:
-                    # 注销连接
+                    # Unregister connection
                     connection_manager.unregister_connection(connection_key)
 
-            # SSE连接已通过context manager正常结束，无需额外处理
+            # SSE connection ended normally via context manager, no additional handling needed
 
         except ConnectionError as e:
             logger.warning(f"Connection error - Service ID: {service_id or 'unknown'}, Client: {client_ip}: {str(e)}")
@@ -114,7 +114,7 @@ class McpController:
         if not service_identifier:
             return None
             
-        # 尝试通过service_identifier查找服务，支持ID和slug_name两种模式
+        # Try to find service by service_identifier, supports both ID and slug_name modes
         db = None
         try:
             from services.api_service.repositories.mcp_service_repository import McpServiceRepository
@@ -123,13 +123,13 @@ class McpController:
             db = next(get_db())
             service_repository = McpServiceRepository(db)
             
-            # 首先尝试按ID查找
+            # Try to find by ID first
             service = service_repository.get_by_id(service_identifier)
             if service:
                 logger.debug(f"Service found (by ID): {service.name} ({service.id})")
                 return service.id
             
-            # 如果按ID未找到，尝试按slug_name查找
+            # If not found by ID, try by slug_name
             service = service_repository.get_by_slug_name(service_identifier)
             if service:
                 logger.debug(f"Service found (by slug_name): {service.name} ({service.id})")
@@ -147,7 +147,7 @@ class McpController:
 
     def _extract_user_info(self, request: Request) -> Optional[tuple[str, str]]:
         """Extract user ID and apikey ID from request by validating apikey parameter."""
-        # 从URL查询参数中获取apikey
+        # Get apikey from URL query parameters
         apikey = request.query_params.get("apikey")
         if not apikey:
             logger.warning("Apikey not found in URL parameters")
@@ -157,11 +157,11 @@ class McpController:
 
         db = None
         try:
-            # 创建数据库会话
+            # Create database session
             db = next(get_db())
             user_apikey_repo = UserApiKeyRepository(db)
             
-            # 通过apikey查询用户信息
+            # Query user info by apikey
             user_apikey = user_apikey_repo.get_by_apikey(apikey)
             if not user_apikey:
                 logger.warning(f"Apikey not found in database: {apikey[:10]}...")
@@ -169,9 +169,9 @@ class McpController:
             
             logger.debug(f"Found apikey record - User ID: {user_apikey.user_id}, API Key ID: {user_apikey.id}, expiry time: {user_apikey.expire_at}")
             
-            # 检查apikey是否过期
+            # Check if apikey is expired
             if user_apikey.expire_at:
-                # 确保时区一致性
+                # Ensure timezone consistency
                 if user_apikey.expire_at.tzinfo is None:
                     expire_at_utc = user_apikey.expire_at.replace(tzinfo=timezone.utc)
                 else:

@@ -1,5 +1,5 @@
 """
-用户钱包仓储类 - API服务中使用
+User wallet repository class - used in API service
 """
 import uuid
 from datetime import datetime, timezone
@@ -9,20 +9,20 @@ from services.common.models.user_wallet import UserWallet
 
 
 class UserWalletRepository:
-    """用户钱包仓储类"""
+    """User wallet repository class"""
     
     def __init__(self, db: Session):
         self.db = db
 
     def create(self, user_id: str) -> UserWallet:
         """
-        创建用户钱包
+        Create user wallet
         
         Args:
-            user_id: 用户ID
+            user_id: User ID
             
         Returns:
-            UserWallet: 创建的钱包实例
+            UserWallet: Created wallet instance
         """
         wallet = UserWallet(
             id=str(uuid.uuid4()),
@@ -39,31 +39,31 @@ class UserWalletRepository:
 
     def get_by_user_id(self, user_id: str) -> Optional[UserWallet]:
         """
-        根据用户ID获取钱包
+        Get wallet by user ID
         
         Args:
-            user_id: 用户ID
+            user_id: User ID
             
         Returns:
-            Optional[UserWallet]: 钱包实例，不存在则返回None
+            Optional[UserWallet]: Wallet instance, returns None if not exists
         """
         return self.db.query(UserWallet).filter(UserWallet.user_id == user_id).first()
 
     def update_balance(self, user_id: str, new_balance: float) -> bool:
         """
-        更新用户余额
+        Update user balance
         
         Args:
-            user_id: 用户ID
-            new_balance: 新余额
+            user_id: User ID
+            new_balance: New balance
             
         Returns:
-            bool: 更新是否成功
+            bool: Whether update succeeded
         """
         wallet = self.get_by_user_id(user_id)
         if wallet:
             wallet.balance = new_balance
-            # updated_at字段由数据库自动更新，不需要手动设置
+            # updated_at field is automatically updated by database, no manual setting needed
             self.db.commit()
             return True
         return False

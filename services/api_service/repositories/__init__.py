@@ -1,7 +1,7 @@
 """
-API服务仓储层模块
+API service repository module
 
-此模块包含API服务中所需的数据访问层实现，专门用于查询操作。
+Contains data access layer implementations for the API service, specifically for query operations.
 """
 
 from .mcp_service_repository import McpServiceRepository
