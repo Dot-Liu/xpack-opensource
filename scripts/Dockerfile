@@ -16,11 +16,11 @@ RUN mkdir -p /$APP
 WORKDIR /$APP
 COPY requirements.txt /$APP/requirements.txt
 
-
 RUN uv venv && source .venv/bin/activate && uv pip install -r requirements.txt
 
 COPY frontend/out /$APP/frontend
 COPY scripts/resource/ /$APP
+COPY scripts/.env /$APP/.env
 COPY pyproject.toml /$APP/pyproject.toml
 COPY services/ /$APP/services
 
