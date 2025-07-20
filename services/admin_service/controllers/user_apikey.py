@@ -15,7 +15,7 @@ def get_apikey_service(db: Session = Depends(get_db)) -> UserApiKeyService:
 
 
 def convert_to_apikey_response(user_apikey: UserApiKey) -> ApikeyResponse:
-    """将UserApiKey模型转换为ApikeyResponse"""
+    """Convert UserApiKey model to ApikeyResponse"""
     return ApikeyResponse(
         apikey_id=user_apikey.id,
         name=user_apikey.name,

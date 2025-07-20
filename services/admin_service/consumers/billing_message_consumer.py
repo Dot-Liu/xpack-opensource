@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class BillingMessageConsumer:
-    """计费消息消费者"""
+    """Billing message consumer"""
     
     def __init__(self):
         self.queue_name = "billing.api.calls"
@@ -26,7 +26,7 @@ class BillingMessageConsumer:
         self._setup_connection()
     
     def _setup_connection(self):
-        """设置RabbitMQ连接"""
+        """Setup RabbitMQ connection"""
         max_retries = 3
         retry_delay = 5
         
@@ -65,7 +65,7 @@ class BillingMessageConsumer:
                     raise
     
     def start_consuming(self):
-        """开始消费消息"""
+        """Start consuming messages"""
         try:
             # 确保连接已建立
             if not self.connection or self.connection.is_closed:
@@ -103,17 +103,17 @@ class BillingMessageConsumer:
             logger.info("接收到中断信号，停止消费")
             self.stop_consuming()
         except Exception as e:
-            logger.error(f"消费消息时发生异常: {str(e)}", exc_info=True)
+            logger.error(f"Exception occurred while consuming messages: {str(e)}", exc_info=True)
             raise
     
     def stop_consuming(self):
-        """停止消费消息"""
+        """Stop consuming messages"""
         self.consuming = False
         if self.channel:
             self.channel.stop_consuming()
         if self.connection and not self.connection.is_closed:
             self.connection.close()
-        logger.info("消息消费已停止")
+        logger.info("Message consumption stopped")
     
     def _process_message(self, channel, method, properties, body):
         """
@@ -180,7 +180,7 @@ class BillingMessageConsumer:
 
 
 def start_billing_consumer():
-    """启动计费消息消费者"""
+    """Start billing message consumer"""
     consumer = BillingMessageConsumer()
     consumer.start_consuming()
 

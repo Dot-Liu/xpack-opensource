@@ -51,10 +51,10 @@ def start_billing_consumer():
 
 
 def stop_billing_consumer():
-    """停止计费消费者"""
+    """Stop billing consumer"""
     global consumer_instance
     if consumer_instance:
-        logger.info("正在停止计费消息消费者...")
+        logger.info("Stopping billing message consumer...")
         consumer_instance.stop_consuming()
 
 

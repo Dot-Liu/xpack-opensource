@@ -55,7 +55,7 @@ class McpServiceRepository:
         return self.db.query(McpService).order_by(McpService.created_at.desc()).all()
 
     def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[list[McpService], int]:
-        """分页获取服务列表"""
+        """Get service list with pagination"""
         # 计算偏移量
         offset = (page - 1) * page_size
 
@@ -74,7 +74,7 @@ class McpServiceRepository:
         return mcp_service
 
     def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[list[McpService], int]:
-        """分页获取公开服务列表，支持关键字搜索"""
+        """Get public service list with pagination, supports keyword search"""
         # 计算偏移量
         offset = (page - 1) * page_size
 

@@ -6,7 +6,7 @@ logging = logging.getLogger(__name__)
 
 
 class OpenApiForAI:
-    """为AI生成API调用参数而优化的简化结构"""
+    """Simplified structure optimized for AI to generate API call parameters"""
 
     def __init__(self, title: str, version: str, description: str = ""):
         self.title = title
@@ -22,7 +22,7 @@ class OpenApiForAI:
 
 
 class ApiEndpoint:
-    """AI友好的API端点表示"""
+    """AI-friendly API endpoint representation"""
 
     def __init__(
         self,
@@ -90,7 +90,7 @@ def convert_openapi_for_ai(openapi_str: str) -> OpenApiForAI:
     """
 
     def resolve_ref(ref_path: str, openapi_data: dict) -> dict:
-        """递归解析 $ref 引用"""
+        """Recursively resolve $ref references"""
         if not ref_path.startswith("#/"):
             return {}
 
@@ -111,7 +111,7 @@ def convert_openapi_for_ai(openapi_str: str) -> OpenApiForAI:
         return current
 
     def resolve_schema_refs(schema: dict, openapi_data: dict) -> dict:
-        """递归解析 schema 中的所有 $ref 引用"""
+        """Recursively resolve all $ref references in schema"""
         if not isinstance(schema, dict):
             return schema
 
@@ -132,7 +132,7 @@ def convert_openapi_for_ai(openapi_str: str) -> OpenApiForAI:
         return resolved_schema
 
     def extract_schema_info(schema: dict) -> dict:
-        """提取schema的关键信息，简化为AI易理解的格式"""
+        """Extract key schema information, simplified for AI understanding"""
         if not schema:
             return {}
 

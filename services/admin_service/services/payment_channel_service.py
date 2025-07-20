@@ -27,14 +27,8 @@ class PaymentChannelService:
         return self.payment_channel_repository.update_config(id, config)
     
     def get_stripe_config(self) -> Optional[Dict[str, Any]]:
-        """
-        获取 Stripe 支付渠道配置
-        
-        Returns:
-            Optional[Dict[str, Any]]: Stripe 配置信息，包含 secret 和 webhook_secret
-        """
+        """Get Stripe payment channel config"""
         try:
-            # 查找 id 为 "stripe" 的支付渠道
             stripe_channel = self.payment_channel_repository.payment_channel_get("stripe")
             
             if not stripe_channel:

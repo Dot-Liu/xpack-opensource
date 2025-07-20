@@ -1,5 +1,5 @@
 """
-MCP调用记录仓储类
+MCP call log repository class
 """
 import uuid
 from datetime import datetime, timezone
@@ -9,51 +9,24 @@ from services.common.models.mcp_call_log import McpCallLog, ProcessStatus
 
 
 class McpCallLogRepository:
-    """MCP调用记录仓储类"""
+    """MCP call log repository class"""
     
     def __init__(self, db: Session):
         self.db = db
 
     def create(self, call_log: McpCallLog) -> McpCallLog:
-        """
-        创建MCP调用记录
-        
-        Args:
-            call_log: MCP调用记录对象
-            
-        Returns:
-            McpCallLog: 创建的记录
-        """
+        """Create MCP call log record"""
         self.db.add(call_log)
         self.db.commit()
         self.db.refresh(call_log)
         return call_log
 
     def get_by_id(self, log_id: str) -> Optional[McpCallLog]:
-        """
-        根据ID获取MCP调用记录
-        
-        Args:
-            log_id: 记录ID
-            
-        Returns:
-            Optional[McpCallLog]: 记录对象，不存在则返回None
-        """
+        """Get MCP call log record by ID"""
         return self.db.query(McpCallLog).filter(McpCallLog.id == log_id).first()
 
     def update_status(self, log_id: str, status: ProcessStatus, error_msg: Optional[str] = None, wallet_history_id: Optional[str] = None) -> bool:
-        """
-        更新处理状态
-        
-        Args:
-            log_id: 记录ID
-            status: 新状态
-            error_msg: 错误信息（可选）
-            wallet_history_id: 关联的钱包历史记录ID（可选）
-            
-        Returns:
-            bool: 更新是否成功
-        """
+        """Update processing status"""
         log_record = self.get_by_id(log_id)
         if log_record:
             log_record.process_status = status

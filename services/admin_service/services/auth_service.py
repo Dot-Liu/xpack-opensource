@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class AuthService:
 
     def __init__(self, db: Session = SessionLocal()):
-        self.db = db  # 保存数据库会话供发送邮件使用
+        self.db = db
         self.user_repository = UserRepository(db)
         self.user_access_token_repository = UserAccessTokenRepository(db)
         self.sys_config_service = SysConfigService(db)

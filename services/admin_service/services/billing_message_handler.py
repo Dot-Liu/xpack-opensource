@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class BillingMessageHandler:
-    """计费消息处理器"""
+    """Billing message handler"""
     
     def __init__(self, db: Session):
         self.db = db
