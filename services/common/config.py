@@ -8,14 +8,18 @@ load_dotenv()
 
 
 class Config:
-    DATABASE_URL = os.getenv("DATABASE_URL", "mysql+mysqlconnector://root:123456@172.31.126.12:3306/xpack-opensource")
-    SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
     API_PORT = int(os.getenv("API_PORT", 8002))
     ADMIN_PORT = int(os.getenv("ADMIN_PORT", 8001))
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
     BASE_URL = os.getenv("BASE_URL", "")
     DEBUG = os.getenv("DEBUG", "true").lower() == "true"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+    # MySQL database configuration
+    MYSQL_HOST = os.getenv("MYSQL_HOST", "mysql")
+    MYSQL_PORT = int(os.getenv("MYSQL_PORT", 3306))
+    MYSQL_USER = os.getenv("MYSQL_USER", "root")
+    MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "123456")
+    MYSQL_DB = os.getenv("MYSQL_DB", "xpack")
 
     # Database connection pool settings
     DB_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", 20))
@@ -41,8 +45,6 @@ class Config:
     RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
     RABBITMQ_VHOST = os.getenv("RABBITMQ_VHOST", "/")
 
-    PAY_SUCCESS_URL = os.getenv("PAY_SUCCESS_URL", "http://localhost:3000/payment/pay_success")
-
     # No authentication required paths
     # Can be overridden with NO_AUTH_PATHS environment variable (comma-separated)
     _default_no_auth_paths = [
@@ -67,5 +69,3 @@ class Config:
     NO_AUTH_PATHS = (
         [path.strip() for path in _env_no_auth_paths.split(",") if path.strip()] if _env_no_auth_paths else _default_no_auth_paths
     )
-
-    print(f"redis config loaded, host: {REDIS_HOST}, password: {REDIS_PASSWORD}")
