@@ -27,3 +27,18 @@ class RedisKeys:
     def sys_config_key(config_key: str) -> str:
         """Generate system config cache key"""
         return f"xpack:sys_config:{config_key}"
+
+    @staticmethod
+    def mcp_service_id_key(service_id: str) -> str:
+        """Generate MCP service cache key by service ID"""
+        return f"xpack:mcp_service:id:{service_id}"
+
+    @staticmethod
+    def mcp_service_slug_key(slug_name: str) -> str:
+        """Generate MCP service cache key by slug name"""
+        return f"xpack:mcp_service:slug:{slug_name}"
+
+    @staticmethod
+    def user_apikey_key(apikey_hash: str) -> str:
+        """Generate user API key cache key (using hash for security)"""
+        return f"xpack:user_apikey:{apikey_hash}"

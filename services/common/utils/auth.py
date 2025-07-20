@@ -47,9 +47,7 @@ def verify_token(token: str, db: Session) -> Optional[User]:
         user = get_model_cache(user_cache_key, User)
         if not user:
             user = (
-                db.query(User)
-                .filter(User.id == user_access_token.user_id and User.is_deleted == False and User.is_active == True)
-                .first()
+                db.query(User).filter(User.id == user_access_token.user_id and User.is_deleted == False and User.is_active == True).first()
             )
             if not user:
                 logger.warning(f"User not found for token: {token}, user_id: {user_access_token.user_id}")

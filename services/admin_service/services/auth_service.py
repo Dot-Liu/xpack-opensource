@@ -124,12 +124,6 @@ class AuthService:
             Optional[str]: User token if login successful, None otherwise
         """
         try:
-            # 检查 Google 登录是否启用
-            google_enable = self.sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_ENABLE)
-            if google_enable != "true":
-                logger.warning("Google login is disabled")
-                return None
-
             # 从系统配置获取 Google OAuth 配置
             google_client_id = self.sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_CLIENT)
             google_client_secret = self.sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_SECRET)

@@ -27,18 +27,40 @@ class RedisClient:
         except Exception as e:
             raise Exception(f"Redis initialization failed: {e}")
 
-    def set(self, key: str, value: str, ex: Optional[int] = None) -> Any:
-        """Set key-value pair"""
+    def set(self, key: str, value: Any, ex: Optional[int] = None) -> Any:
+        """Set key-value pair with automatic serialization"""
         try:
-            return self.client.set(key, value, ex=ex)
+            # Handle different value types
+            if isinstance(value, (dict, list)):
+                # For complex objects, use pickle serialization
+                import pickle
+                serialized_value = pickle.dumps(value).decode('latin1')
+                return self.client.set(key, serialized_value, ex=ex)
+            elif isinstance(value, str):
+                return self.client.set(key, value, ex=ex)
+            else:
+                # For other types, convert to string
+                return self.client.set(key, str(value), ex=ex)
         except redis.RedisError as e:
             raise Exception(f"Redis SET operation failed: {e}")
 
     def get(self, key: str) -> Any:
-        """Get value by key"""
+        """Get value by key with automatic deserialization"""
         try:
             result = self.client.get(key)
-            return result if result is not None else None
+            if result is not None:
+                # Try to deserialize if it's pickled data
+                try:
+                    import pickle
+                    # Ensure result is string before encoding
+                    if isinstance(result, str):
+                        return pickle.loads(result.encode('latin1'))
+                    else:
+                        return result
+                except:
+                    # If not pickled, return as is
+                    return result
+            return None
         except redis.RedisError as e:
             raise Exception(f"Redis GET operation failed: {e}")
 
